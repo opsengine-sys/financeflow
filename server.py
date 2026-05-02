@@ -372,6 +372,7 @@ def user_profile(current_user):
         settings = json.loads(current_user['settings'] or '{}')
         return jsonify({'id': current_user['id'], 'name': current_user['name'],
                         'email': current_user['email'], 'avatar': current_user['avatar'],
+                        'clerk_id': current_user['clerk_id'],
                         'settings': settings})
     d       = request.json or {}
     updates = []
@@ -388,6 +389,29 @@ def user_profile(current_user):
         values.append(current_user['id'])
         db.execute(f"UPDATE users SET {','.join(updates)} WHERE id=?", values)
         db.commit()
+    return jsonify({'ok': True})
+
+@app.route('/api/auth/change-password', methods=['POST'])
+@token_required
+def change_password(current_user):
+    d           = request.json or {}
+    current_pw  = d.get('currentPassword', '')
+    new_pw      = d.get('newPassword', '')
+    if not new_pw or len(new_pw) < 8:
+        return jsonify({'error': 'New password must be at least 8 characters'}), 400
+    # Clerk / SSO users have no local password — disallow
+    if current_user['clerk_id']:
+        return jsonify({'error': 'Password is managed by your sign-in provider'}), 400
+    # Verify current password if one exists
+    if current_user['password_hash']:
+        if not current_pw:
+            return jsonify({'error': 'Current password is required'}), 400
+        if not bcrypt.checkpw(current_pw.encode(), current_user['password_hash'].encode()):
+            return jsonify({'error': 'Current password is incorrect'}), 401
+    new_hash = bcrypt.hashpw(new_pw.encode(), bcrypt.gensalt()).decode()
+    db = get_db()
+    db.execute('UPDATE users SET password_hash=? WHERE id=?', [new_hash, current_user['id']])
+    db.commit()
     return jsonify({'ok': True})
 
 # ─── All Data (single fetch for sync) ────────────────────────────────────────

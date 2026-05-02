@@ -2121,13 +2121,98 @@ function removeTag(i){appTags.splice(i,1);renderTagChips();toast('Removed');}
 function addTag(){const inp=document.getElementById('newTagInput'),val=inp.value.trim();if(!val||appTags.includes(val)){toast(val?'Already exists':'Enter a tag','error');return;}appTags.push(val);renderTagChips();inp.value='';toast('Added!');}
 
 /* Profile */
-function openProfileModal(){document.getElementById('profileModal').classList.add('active');}
-function handleAvatarChange(input){if(!input.files||!input.files[0])return;const r=new FileReader();r.onload=e=>{const el=document.getElementById('profileAvatarEl');el.innerHTML=`<img src="${e.target.result}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;toast('Photo updated!');};r.readAsDataURL(input.files[0]);}
-function saveProfile(){updateGreeting();toast('Profile saved!');closeModal('profileModal');}
+function openProfileModal(){
+  const u=currentUser||{};
+  const s=u.settings||{};
+  const isSso=!!(u.clerk_id);
+  // Avatar
+  const av=document.getElementById('profileAvatarEl');
+  if(u.avatar){av.innerHTML=`<img src="${u.avatar}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;}
+  else{av.textContent=(u.name||'U')[0].toUpperCase();}
+  // Name split
+  const parts=(u.name||'').split(' ');
+  document.getElementById('profileFirstName').value=parts[0]||'';
+  document.getElementById('profileLastName').value=parts.slice(1).join(' ')||'';
+  // Email (read-only for SSO users)
+  const emailInput=document.getElementById('profileEmail');
+  emailInput.value=u.email||'';
+  emailInput.readOnly=isSso;
+  emailInput.style.background=isSso?'var(--bg-2)':'';
+  // Settings fields
+  document.getElementById('profilePhone').value=s.phone||'';
+  document.getElementById('profileDob').value=s.dob||'';
+  document.getElementById('profileGender').value=s.gender||'';
+  document.getElementById('profileCity').value=s.city||s.weatherCity||'';
+  document.getElementById('profileOccupation').value=s.occupation||'';
+  document.getElementById('profileBio').value=s.bio||'';
+  // SSO badge on email label
+  const emailLabel=emailInput.closest('.form-group')?.querySelector('.form-label');
+  if(emailLabel){
+    emailLabel.innerHTML=isSso
+      ?'Email <span class="badge badge-blue" style="font-size:.7rem;vertical-align:middle;">Clerk SSO</span>'
+      :'Email';
+  }
+  document.getElementById('profileModal').classList.add('active');
+}
+function handleAvatarChange(input){
+  if(!input.files||!input.files[0])return;
+  const r=new FileReader();
+  r.onload=async e=>{
+    const b64=e.target.result;
+    const el=document.getElementById('profileAvatarEl');
+    el.innerHTML=`<img src="${b64}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    if(_authToken){try{await apiPut('/api/user',{avatar:b64});}catch{}}
+    if(currentUser)currentUser.avatar=b64;
+    toast('Photo updated!');
+  };
+  r.readAsDataURL(input.files[0]);
+}
+async function saveProfile(){
+  const firstName=document.getElementById('profileFirstName').value.trim();
+  const lastName=document.getElementById('profileLastName').value.trim();
+  const name=[firstName,lastName].filter(Boolean).join(' ')||'User';
+  const settings={
+    phone:document.getElementById('profilePhone').value.trim(),
+    dob:document.getElementById('profileDob').value,
+    gender:document.getElementById('profileGender').value,
+    city:document.getElementById('profileCity').value.trim(),
+    weatherCity:document.getElementById('profileCity').value.trim(),
+    occupation:document.getElementById('profileOccupation').value.trim(),
+    bio:document.getElementById('profileBio').value.trim(),
+  };
+  if(_authToken){
+    try{
+      await apiPut('/api/user',{name,settings});
+      if(currentUser){currentUser.name=name;currentUser.settings={...currentUser.settings,...settings};}
+      // Sync weather city
+      if(settings.weatherCity){_weatherCity=settings.weatherCity;const wci=document.getElementById('weatherCityInput');if(wci)wci.value=_weatherCity;}
+    }catch(e){toast(e.message||'Save failed','error');return;}
+  }
+  updateGreeting();toast('Profile saved!');closeModal('profileModal');
+}
 
 /* Security */
 function openSecurityModal(){pinBuffer='';pinPhase='set';updatePinDisplay();document.getElementById('pinStatus').textContent='Enter a new 4-digit PIN';document.getElementById('pinInstruction').textContent=pinSaved?'Change your PIN:':'Set a 4-digit PIN to lock the app.';document.getElementById('pinActiveStatus').classList.toggle('hidden',!pinSaved);document.getElementById('securityModal').classList.add('active');}
-function savePassword(){const np=document.getElementById('newPassword').value,cp=document.getElementById('confirmPassword').value;if(!np){toast('Enter new password','error');return;}if(np!==cp){toast('Passwords do not match','error');return;}if(np.length<8){toast('Min 8 characters','error');return;}toast('Password updated!');['newPassword','confirmPassword','currentPassword'].forEach(id=>document.getElementById(id).value='');}
+async function savePassword(){
+  const cp=document.getElementById('currentPassword').value;
+  const np=document.getElementById('newPassword').value;
+  const rp=document.getElementById('confirmPassword').value;
+  if(!np){toast('Enter a new password','error');return;}
+  if(np.length<8){toast('Minimum 8 characters','error');return;}
+  if(np!==rp){toast('Passwords do not match','error');return;}
+  if(!_authToken){toast('Not signed in','error');return;}
+  const btn=document.querySelector('#securityModal .btn-primary');
+  if(btn){btn.textContent='Saving…';btn.disabled=true;}
+  try{
+    await apiPost('/api/auth/change-password',{currentPassword:cp,newPassword:np});
+    toast('Password updated!');
+    ['newPassword','confirmPassword','currentPassword'].forEach(id=>document.getElementById(id).value='');
+  }catch(e){
+    toast(e.message||'Could not update password','error');
+  }finally{
+    if(btn){btn.textContent='Update Password';btn.disabled=false;}
+  }
+}
 function clearPin(){if(confirm('Remove PIN?')){pinSaved='';document.getElementById('pinActiveStatus').classList.add('hidden');document.getElementById('pinInstruction').textContent='Set a 4-digit PIN to lock the app.';toast('PIN removed');}}
 function setupPinPad(){document.getElementById('pinPad').querySelectorAll('.pin-key').forEach(key=>{key.addEventListener('click',()=>{const d=key.dataset.digit;if(d==='del'){pinBuffer=pinBuffer.slice(0,-1);}else if(d==='ok'){if(pinBuffer.length!==4){toast('Enter all 4 digits','error');return;}if(pinPhase==='set'){const tmp=pinBuffer;pinBuffer='';pinPhase='confirm_wait';window._tmpPin=tmp;document.getElementById('pinStatus').textContent='Confirm your PIN';updatePinDisplay();}else if(pinPhase==='confirm_wait'){if(pinBuffer===window._tmpPin){pinSaved=pinBuffer;pinBuffer='';pinPhase='set';document.getElementById('pinStatus').textContent='✓ PIN set successfully';document.getElementById('pinActiveStatus').classList.remove('hidden');updatePinDisplay();toast('PIN activated! 🔐');}else{toast('PINs do not match','error');pinBuffer='';pinPhase='set';document.getElementById('pinStatus').textContent='Enter a new 4-digit PIN';updatePinDisplay();}}return;}else if(pinBuffer.length<4){pinBuffer+=d;}updatePinDisplay();});});}
 function updatePinDisplay(){for(let i=0;i<4;i++)document.getElementById('pin'+i).classList.toggle('filled',i<pinBuffer.length);}
