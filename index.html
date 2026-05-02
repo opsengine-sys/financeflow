@@ -318,6 +318,19 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
 .nav-tab-option-label{font-weight:600;font-size:.88rem;color:var(--text);flex:1;pointer-events:none}
 .nav-tab-check{width:20px;height:20px;border-radius:var(--radius-full);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.75rem;transition:all .15s;flex-shrink:0}
 .nav-tab-option.selected .nav-tab-check{background:var(--primary);border-color:var(--primary);color:#fff}
+/* Social Auth */
+.social-divider{display:flex;align-items:center;gap:.75rem;margin:1.1rem 0 .9rem;color:var(--text-3);font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.social-divider::before,.social-divider::after{content:'';flex:1;height:1px;background:var(--border-light)}
+.social-btns{display:flex;flex-direction:column;gap:.625rem}
+.btn-social{display:flex;align-items:center;justify-content:center;gap:.625rem;width:100%;padding:.75rem 1rem;border-radius:var(--radius-md);font-size:.9rem;font-weight:600;cursor:pointer;transition:background .15s,transform .1s,box-shadow .15s;border:none;font-family:'DM Sans',sans-serif}
+.btn-social:active{transform:scale(.98)}
+.btn-social svg{width:18px;height:18px;flex-shrink:0}
+.btn-apple{background:#000;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.btn-apple:hover{background:#1a1a1a}
+body.dark-mode .btn-apple{background:#fff;color:#000}
+body.dark-mode .btn-apple:hover{background:#f0f0f0}
+/* Google button rendered by GIS gets its own styles */
+#googleBtnWrap>div{width:100%!important}
 /* Profile */
 .profile-avatar-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:1.5rem;gap:.75rem}
 .profile-avatar{width:88px;height:88px;border-radius:var(--radius-full);background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-size:2.5rem;font-family:'Sora',sans-serif;font-weight:700;cursor:pointer;overflow:hidden;position:relative;flex-shrink:0;border:3px solid var(--border)}
@@ -593,6 +606,17 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
         <div class="form-group"><label class="form-label">Password <span style="color:var(--text-3);font-size:.78rem;font-weight:400;">(min 6 chars)</span></label><input type="password" class="form-input" id="regPassword" placeholder="Choose a strong password" autocomplete="new-password"></div>
         <button class="btn btn-primary" id="registerBtn" style="width:100%;margin-top:.5rem;justify-content:center;padding:.875rem;" onclick="doRegister()">Create Account →</button>
       </div>
+      <!-- Social login (shown when Google / Apple credentials are configured) -->
+      <div id="socialAuthSection" style="display:none;margin-top:.25rem;">
+        <div class="social-divider"><span>or continue with</span></div>
+        <div class="social-btns">
+          <div id="googleBtnWrap" style="display:none;width:100%;"></div>
+          <button id="appleSignInBtn" onclick="doAppleSignIn()" style="display:none;" class="btn-social btn-apple">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.42c1.27.07 2.13.74 2.89.8.87-.2 1.7-.88 3.06-.94 1.73.09 3.03.82 3.85 2.1-3.53 2.11-2.9 6.44.2 7.9zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+            Sign in with Apple
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -821,6 +845,7 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
         <div class="form-group"><label class="form-label">Report Type</label><select class="form-select"><option>Monthly Summary</option><option>Category-wise Breakdown</option><option>Tax-Ready Expense Report</option><option>Year-End Summary</option></select></div>
         <div class="form-row"><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input"></div><div class="form-group"><label class="form-label">End Date</label><input type="date" class="form-input"></div></div>
         <button class="btn btn-primary" onclick="generateReport()">📊 Generate Report</button>
+        <button class="btn btn-secondary" style="margin-left:.5rem;" onclick="exportToPDF()">📄 Download PDF Report</button>
       </div>
       <div class="card">
         <h3 class="card-title" style="margin-bottom:.375rem;">CSV Templates</h3>
@@ -2103,7 +2128,254 @@ function exportAsCSV(){
   const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:`financeflow_transactions_${new Date().toISOString().split('T')[0]}.csv`});a.click();URL.revokeObjectURL(a.href);toast('Exported!');
 }
 function exportAsJSON(){const data={transactions:demoTransactions,budgets:demoBudgets,goals:demoGoals,lending:demoLending,subscriptions:demoSubscriptions,banks:demoBanks,cards:demoCards,investments:demoInvestments};const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),download:'financeflow_backup.json'});a.click();URL.revokeObjectURL(a.href);toast('Backup downloaded!');}
-function generateReport(){toast('Report generation coming soon — export CSV or JSON in the meantime!','warning');}
+function generateReport(){exportToPDF();}
+
+/* ══ PDF EXPORT ══ */
+async function _loadScript(src){return new Promise((res,rej)=>{if(document.querySelector(`script[src="${src}"]`)){res();return;}const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+
+async function exportToPDF(){
+  const btn=document.querySelector('[onclick="exportToPDF()"]');
+  if(btn){btn.textContent='⏳ Building PDF…';btn.disabled=true;}
+  try{
+    await _loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    await _loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210,PL=14,PR=14,CW=W-PL-PR;
+    const PRIMARY=[4,120,87],ACCENT=[16,185,129],DARK=[15,30,25],GRAY=[100,116,139],LGRAY=[241,245,249];
+
+    // ── Header ──────────────────────────────────────────────────────
+    doc.setFillColor(...PRIMARY);
+    doc.rect(0,0,W,32,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');doc.setFontSize(20);
+    doc.text('FinanceFlow',PL,13);
+    doc.setFont('helvetica','normal');doc.setFontSize(9);
+    doc.text('Smart Personal Finance Report',PL,19);
+    const now=new Date();
+    const reportDate=now.toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+    doc.text(`Generated: ${reportDate}`,PL,25);
+    if(currentUser?.name){
+      doc.setFont('helvetica','bold');doc.setFontSize(10);
+      doc.text(currentUser.name,W-PR,13,{align:'right'});
+      doc.setFont('helvetica','normal');doc.setFontSize(8);
+      doc.text(currentUser.email||'',W-PR,19,{align:'right'});
+    }
+
+    // ── Date range ──────────────────────────────────────────────────
+    const dateInputs=document.querySelectorAll('#reportsPage input[type="date"]');
+    const startStr=dateInputs[0]?.value;
+    const endStr  =dateInputs[1]?.value;
+    const txns=demoTransactions.filter(t=>{
+      if(startStr&&t.date<startStr)return false;
+      if(endStr  &&t.date>endStr  )return false;
+      return true;
+    });
+    const rangeLabel=startStr&&endStr?`${formatDate(startStr)} – ${formatDate(endStr)}`
+      :startStr?`From ${formatDate(startStr)}`
+      :endStr  ?`Until ${formatDate(endStr)}`
+      :'All time';
+
+    let y=38;
+    doc.setTextColor(...DARK);
+    doc.setFont('helvetica','bold');doc.setFontSize(9);
+    doc.text(`Period: ${rangeLabel}`,PL,y);y+=8;
+
+    // ── Summary boxes ───────────────────────────────────────────────
+    const income  =txns.filter(t=>t.type==='income' ).reduce((s,t)=>s+t.amount,0);
+    const expense =txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const net     =income-expense;
+    const savRate =income>0?Math.round(net/income*100):0;
+    const boxes=[
+      {label:'Total Income'  ,val:`₹${income.toLocaleString('en-IN')}`,  col:[220,252,231],txt:[4,120,87]},
+      {label:'Total Expenses',val:`₹${expense.toLocaleString('en-IN')}`, col:[254,226,226],txt:[185,28,28]},
+      {label:'Net Savings'   ,val:`₹${Math.abs(net).toLocaleString('en-IN')}${net<0?' (deficit)':''}`,col:[219,234,254],txt:[29,78,216]},
+      {label:'Savings Rate'  ,val:`${savRate}%`,                         col:[254,243,199],txt:[146,64,14]},
+    ];
+    const bw=(CW-9)/4,bh=18;
+    boxes.forEach((b,i)=>{
+      const bx=PL+i*(bw+3);
+      doc.setFillColor(...b.col);
+      doc.roundedRect(bx,y,bw,bh,2,2,'F');
+      doc.setTextColor(...b.txt);
+      doc.setFont('helvetica','bold');doc.setFontSize(7);
+      doc.text(b.label,bx+bw/2,y+5.5,{align:'center'});
+      doc.setFontSize(9);
+      doc.text(b.val,bx+bw/2,y+12,{align:'center'});
+    });
+    y+=bh+8;
+
+    // ── Transactions table ──────────────────────────────────────────
+    if(txns.length){
+      doc.setFont('helvetica','bold');doc.setFontSize(10);
+      doc.setTextColor(...DARK);
+      doc.text('Transactions',PL,y);y+=2;
+      doc.autoTable({
+        startY:y,margin:{left:PL,right:PR},
+        head:[['Date','Description','Category','Payment','Amount']],
+        body:txns.slice(0,80).map(t=>[
+          formatDate(t.date),
+          t.description.length>28?t.description.slice(0,26)+'…':t.description,
+          t.category,t.payment,
+          `${t.type==='income'?'+':'-'}₹${t.amount.toLocaleString('en-IN')}`
+        ]),
+        headStyles:{fillColor:PRIMARY,textColor:[255,255,255],fontStyle:'bold',fontSize:8},
+        bodyStyles:{fontSize:8,textColor:DARK},
+        alternateRowStyles:{fillColor:LGRAY},
+        columnStyles:{4:{halign:'right',fontStyle:'bold'}},
+        didParseCell:(data)=>{
+          if(data.section==='body'&&data.column.index===4){
+            const raw=txns[data.row.index];
+            data.cell.styles.textColor=raw?.type==='income'?[4,120,87]:[185,28,28];
+          }
+        },
+        showFoot:'never',
+        theme:'plain',
+      });
+      y=doc.lastAutoTable.finalY+8;
+    }
+
+    // ── Budget overview ─────────────────────────────────────────────
+    if(demoBudgets.length&&y<260){
+      doc.setFont('helvetica','bold');doc.setFontSize(10);
+      doc.setTextColor(...DARK);
+      doc.text('Budget Overview',PL,y);y+=2;
+      doc.autoTable({
+        startY:y,margin:{left:PL,right:PR},
+        head:[['Category','Limit','Spent','Remaining','Used']],
+        body:demoBudgets.map(b=>{
+          const rem=Math.max(0,b.limit_amount-b.spent);
+          const pct=b.limit_amount>0?Math.round(b.spent/b.limit_amount*100):0;
+          return[b.category,`₹${b.limit_amount.toLocaleString('en-IN')}`,`₹${b.spent.toLocaleString('en-IN')}`,`₹${rem.toLocaleString('en-IN')}`,`${pct}%`];
+        }),
+        headStyles:{fillColor:PRIMARY,textColor:[255,255,255],fontStyle:'bold',fontSize:8},
+        bodyStyles:{fontSize:8,textColor:DARK},
+        alternateRowStyles:{fillColor:LGRAY},
+        columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'right'},4:{halign:'right',fontStyle:'bold'}},
+        theme:'plain',
+      });
+      y=doc.lastAutoTable.finalY+8;
+    }
+
+    // ── Goals ───────────────────────────────────────────────────────
+    if(demoGoals.length&&y<260){
+      doc.setFont('helvetica','bold');doc.setFontSize(10);
+      doc.setTextColor(...DARK);
+      doc.text('Goals Progress',PL,y);y+=2;
+      doc.autoTable({
+        startY:y,margin:{left:PL,right:PR},
+        head:[['Goal','Target','Saved','Progress','Deadline']],
+        body:demoGoals.map(g=>{
+          const pct=g.target>0?Math.round(g.saved/g.target*100):0;
+          return[g.name,`₹${g.target.toLocaleString('en-IN')}`,`₹${g.saved.toLocaleString('en-IN')}`,`${pct}%`,g.deadline?formatDate(g.deadline):'—'];
+        }),
+        headStyles:{fillColor:PRIMARY,textColor:[255,255,255],fontStyle:'bold',fontSize:8},
+        bodyStyles:{fontSize:8,textColor:DARK},
+        alternateRowStyles:{fillColor:LGRAY},
+        columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'right',fontStyle:'bold'},4:{halign:'center'}},
+        theme:'plain',
+      });
+    }
+
+    // ── Footer ──────────────────────────────────────────────────────
+    const pages=doc.internal.getNumberOfPages();
+    for(let i=1;i<=pages;i++){
+      doc.setPage(i);
+      doc.setFillColor(...LGRAY);
+      doc.rect(0,285,W,12,'F');
+      doc.setFont('helvetica','normal');doc.setFontSize(7);
+      doc.setTextColor(...GRAY);
+      doc.text('Generated by FinanceFlow · Confidential',PL,291);
+      doc.text(`Page ${i} of ${pages}`,W-PR,291,{align:'right'});
+    }
+
+    const month=now.toLocaleDateString('en-IN',{month:'short',year:'numeric'}).replace(' ','-');
+    doc.save(`FinanceFlow_Report_${month}.pdf`);
+    toast('PDF downloaded!');
+  }catch(e){
+    console.error('PDF error:',e);
+    toast('PDF generation failed: '+(e.message||'Please try again'),'error');
+  }finally{
+    if(btn){btn.textContent='📄 Download PDF Report';btn.disabled=false;}
+  }
+}
+
+/* ══ SOCIAL AUTH ══ */
+async function loadSocialAuth(){
+  try{
+    const cfg=await fetch('/api/auth/social-config').then(r=>r.json());
+    const hasGoogle=!!(cfg.google_client_id);
+    const hasApple =!!(cfg.apple_client_id);
+    if(!hasGoogle&&!hasApple)return;
+    document.getElementById('socialAuthSection').style.display='';
+
+    // Google
+    if(hasGoogle){
+      await _loadScript('https://accounts.google.com/gsi/client');
+      document.getElementById('googleBtnWrap').style.display='';
+      google.accounts.id.initialize({
+        client_id:cfg.google_client_id,
+        callback:handleGoogleCredential,
+        auto_select:false,
+        cancel_on_tap_outside:true
+      });
+      google.accounts.id.renderButton(
+        document.getElementById('googleBtnWrap'),
+        {theme:'outline',size:'large',width:document.getElementById('googleBtnWrap').offsetWidth||340,text:'signin_with',shape:'rectangular',logo_alignment:'left'}
+      );
+    }
+
+    // Apple
+    if(hasApple){
+      await _loadScript('https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js');
+      AppleID.auth.init({
+        clientId:cfg.apple_client_id,
+        scope:'name email',
+        redirectURI:window.location.origin,
+        usePopup:true
+      });
+      document.getElementById('appleSignInBtn').style.display='';
+      document.addEventListener('AppleIDSignInOnSuccess',handleAppleSuccess);
+      document.addEventListener('AppleIDSignInOnFailure',e=>toast('Apple sign-in cancelled','warning'));
+    }
+  }catch(e){console.warn('Social auth load error:',e);}
+}
+
+async function handleGoogleCredential(response){
+  try{
+    const data=await apiPost('/api/auth/google',{idToken:response.credential});
+    await _finishSocialSignIn(data);
+  }catch(e){toast(e.message||'Google sign-in failed','error');}
+}
+
+async function doAppleSignIn(){
+  try{await AppleID.auth.signIn();}
+  catch(e){if(e.error!=='popup_closed_by_user')toast('Apple sign-in failed','error');}
+}
+
+async function handleAppleSuccess(e){
+  try{
+    const data=await apiPost('/api/auth/apple',{
+      idToken:e.detail.authorization.id_token,
+      user:e.detail.user||{}
+    });
+    await _finishSocialSignIn(data);
+  }catch(e){toast(e.message||'Apple sign-in failed','error');}
+}
+
+async function _finishSocialSignIn(data){
+  _authToken=data.token;
+  localStorage.setItem('ff_token',_authToken);
+  currentUser=data.user;
+  if(data.user.is_new){
+    document.getElementById('loginPage').classList.add('hidden');
+    document.getElementById('onboardingPage').classList.remove('hidden');
+    document.getElementById('obName').value=(data.user.name||'').split(' ')[0];
+  }else{
+    await loadUserData();
+    launchApp();
+  }
+}
 
 /* ══ SETTINGS ══ */
 function toggleDarkMode(item){const t=item.querySelector('.toggle-switch');t.classList.toggle('active');document.body.classList.toggle('dark-mode',t.classList.contains('active'));toast(t.classList.contains('active')?'Dark mode on':'Light mode on');}
@@ -2624,21 +2896,22 @@ document.addEventListener('DOMContentLoaded',async()=>{
   // Show login page
   document.getElementById('loginPage').classList.remove('hidden');
 
-  // Try to load Clerk if configured
+  // Try to load Clerk if configured (replaces the whole form)
   try{
     const cfg=await fetch('/api/auth/clerk-config').then(r=>r.json());
     if(cfg.publishableKey){
       await initClerk(cfg.publishableKey);
-      // If Clerk handled auth, we're done
       if(_authToken) return;
-      // If Clerk mounted its UI, don't also show traditional form
       if(window._clerk && !window._clerk.user) return;
     }
   }catch(e){
-    console.warn('Clerk config not available, using traditional auth');
+    console.warn('Clerk not configured, using traditional auth');
   }
 
-  // Fallback: traditional email/password login
+  // Load Google / Apple social buttons (independent of Clerk)
+  loadSocialAuth();
+
+  // Traditional email/password Enter-key handlers
   ['loginEmail','loginPassword'].forEach(id=>{
     document.getElementById(id)?.addEventListener('keydown',e=>{if(e.key==='Enter')doSignIn();});
   });

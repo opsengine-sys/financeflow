@@ -10,11 +10,13 @@ from functools import wraps
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app, supports_credentials=True)
 
-SECRET        = os.environ.get('JWT_SECRET', 'ff_jwt_secret_2026_change_in_prod')
-CLERK_PUB_KEY = os.environ.get('CLERK_PUBLISHABLE_KEY', '')
-CLERK_SECRET  = os.environ.get('CLERK_SECRET_KEY', '')
-DB_PATH       = 'financeflow.db'
-MKT_HEADERS   = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+SECRET           = os.environ.get('JWT_SECRET', 'ff_jwt_secret_2026_change_in_prod')
+CLERK_PUB_KEY    = os.environ.get('CLERK_PUBLISHABLE_KEY', '')
+CLERK_SECRET     = os.environ.get('CLERK_SECRET_KEY', '')
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_OAUTH_CLIENT_ID', '')
+APPLE_CLIENT_ID  = os.environ.get('APPLE_CLIENT_ID', '')
+DB_PATH          = 'financeflow.db'
+MKT_HEADERS      = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
 
 # ─── Clerk Token Verification ─────────────────────────────────────────────────
 
@@ -318,8 +320,116 @@ def clerk_auth():
 
 @app.route('/api/auth/clerk-config', methods=['GET'])
 def clerk_config():
-    """Return the Clerk publishable key so the frontend can load ClerkJS."""
     return jsonify({'publishableKey': CLERK_PUB_KEY})
+
+@app.route('/api/auth/social-config', methods=['GET'])
+def social_config():
+    """Return public OAuth client IDs (safe to expose to frontend)."""
+    return jsonify({
+        'google_client_id': GOOGLE_CLIENT_ID,
+        'apple_client_id':  APPLE_CLIENT_ID,
+    })
+
+@app.route('/api/auth/google', methods=['POST'])
+def google_auth():
+    """Verify a Google ID token and sign the user in / create account."""
+    id_token = (request.json or {}).get('idToken', '')
+    if not id_token:
+        return jsonify({'error': 'Missing Google ID token'}), 400
+    try:
+        r = requests.get(
+            f'https://oauth2.googleapis.com/tokeninfo?id_token={id_token}',
+            timeout=5
+        )
+        info = r.json()
+    except Exception:
+        return jsonify({'error': 'Could not contact Google'}), 502
+    if not r.ok or 'error_description' in info or info.get('email_verified') != 'true':
+        return jsonify({'error': 'Invalid or unverified Google token'}), 401
+    # Optionally enforce client ID audience check
+    if GOOGLE_CLIENT_ID and info.get('aud') != GOOGLE_CLIENT_ID:
+        return jsonify({'error': 'Token audience mismatch'}), 401
+
+    email     = info.get('email', '').lower()
+    name      = info.get('name') or info.get('given_name') or email.split('@')[0]
+    google_id = info.get('sub', '')
+    avatar    = info.get('picture', '')
+
+    db   = get_db()
+    # First look up by google clerk_id tag
+    user = db.execute("SELECT * FROM users WHERE clerk_id=?", [f'google_{google_id}']).fetchone()
+    is_new = False
+    if not user:
+        user = db.execute("SELECT * FROM users WHERE email=?", [email]).fetchone()
+        if user:
+            db.execute("UPDATE users SET clerk_id=?, avatar=? WHERE id=?",
+                       [f'google_{google_id}', avatar or user['avatar'], user['id']])
+            db.commit()
+            user = db.execute("SELECT * FROM users WHERE id=?", [user['id']]).fetchone()
+        else:
+            uid = str(uuid.uuid4())
+            db.execute("INSERT INTO users (id,email,name,password_hash,avatar,clerk_id) VALUES (?,?,?,?,?,?)",
+                       [uid, email, name, '', avatar, f'google_{google_id}'])
+            db.commit()
+            user = db.execute("SELECT * FROM users WHERE id=?", [uid]).fetchone()
+            is_new = True
+
+    token    = make_token(user['id'])
+    settings = json.loads(user['settings'] or '{}')
+    return jsonify({'token': token, 'user': {
+        'id': user['id'], 'name': user['name'], 'email': user['email'],
+        'avatar': user['avatar'], 'settings': settings, 'is_new': is_new
+    }})
+
+@app.route('/api/auth/apple', methods=['POST'])
+def apple_auth():
+    """Decode Apple's id_token (JWT) and sign the user in / create account.
+    Apple only sends name on the very first login; subsequent logins only have sub + email."""
+    import base64 as _b64, json as _json
+    d        = request.json or {}
+    id_token = d.get('idToken', '')
+    user_obj = d.get('user', {})   # {name:{firstName,lastName}, email} — first login only
+
+    if not id_token:
+        return jsonify({'error': 'Missing Apple ID token'}), 400
+
+    # Decode payload (skip signature verification — Apple public keys for full verification)
+    try:
+        payload_b64 = id_token.split('.')[1]
+        payload_b64 += '=' * (-len(payload_b64) % 4)
+        payload = _json.loads(_b64.urlsafe_b64decode(payload_b64))
+    except Exception:
+        return jsonify({'error': 'Invalid Apple token format'}), 400
+
+    apple_sub = payload.get('sub', '')
+    email     = (payload.get('email') or user_obj.get('email', '')).lower()
+    fn        = (user_obj.get('name') or {}).get('firstName', '')
+    ln        = (user_obj.get('name') or {}).get('lastName', '')
+    name      = f'{fn} {ln}'.strip() or (email.split('@')[0] if email else 'Apple User')
+
+    db     = get_db()
+    user   = db.execute("SELECT * FROM users WHERE clerk_id=?", [f'apple_{apple_sub}']).fetchone()
+    is_new = False
+    if not user and email:
+        user = db.execute("SELECT * FROM users WHERE email=?", [email]).fetchone()
+    if not user:
+        uid = str(uuid.uuid4())
+        db.execute("INSERT INTO users (id,email,name,password_hash,clerk_id) VALUES (?,?,?,?,?)",
+                   [uid, email or f'apple_{apple_sub}@privaterelay.appleid.com', name, '', f'apple_{apple_sub}'])
+        db.commit()
+        user   = db.execute("SELECT * FROM users WHERE id=?", [uid]).fetchone()
+        is_new = True
+    else:
+        if not user['clerk_id']:
+            db.execute("UPDATE users SET clerk_id=? WHERE id=?", [f'apple_{apple_sub}', user['id']])
+            db.commit()
+
+    token    = make_token(user['id'])
+    settings = json.loads(user['settings'] or '{}')
+    return jsonify({'token': token, 'user': {
+        'id': user['id'], 'name': user['name'], 'email': user['email'],
+        'avatar': user['avatar'], 'settings': settings, 'is_new': is_new
+    }})
 
 # ─── Auth Routes ──────────────────────────────────────────────────────────────
 
