@@ -1,57 +1,76 @@
 # FinanceFlow — Smart Personal Finance Tracker
 
-A single-file HTML/CSS/JS personal finance tracking app.
+A full-stack personal finance web app with real authentication, cross-device data sync, live market data, onboarding, and mobile-optimized UI.
 
 ## Stack
-- Pure HTML, CSS, JavaScript (no frameworks)
-- Served via `python3 -m http.server 5000`
-- Fonts: Sora + DM Sans via Google Fonts
+- **Frontend**: Pure HTML, CSS, JavaScript (no frameworks), Fonts: Sora + DM Sans
+- **Backend**: Python Flask + SQLite (server.py)
+- **Auth**: JWT tokens (PyJWT) + bcrypt password hashing
+- **Served**: Flask on port 5000 (replaces simple http.server)
 
-## Features (current — Round 7)
+## Key Files
+- `index.html` — entire frontend (~2460 lines)
+- `server.py` — Flask backend (auth, CRUD APIs, market data proxy)
+- `financeflow.db` — SQLite database (auto-created on first run)
+
+## Running
+Workflow: `python3 server.py` on port 5000 (webview)
+
+## Authentication & Sync (Round 8)
+- **Real sign-in / sign-up** with JWT tokens stored in localStorage
+- **"Keep me signed in"** checkbox — uses localStorage (30-day) vs sessionStorage (session)
+- Auto-login on return visits: checks token, fetches profile + all data
+- **Cross-device sync**: every CRUD operation (add/edit/delete) is persisted to SQLite via REST API
+- Sign-out clears token + resets to demo state
+
+## Onboarding Wizard (New Users)
+- 3-step wizard shown after first registration
+- Step 0: Choose Quick Start (demo data) or Full Setup
+- Step 1: Name, city (used for weather), monthly income
+- Full Setup: prompts for primary goal + target amount
+- Step 2: Confirmation screen listing all synced data types
+
+## REST API Endpoints
+- `POST /api/auth/register` — create account (name, email, password)
+- `POST /api/auth/login` — sign in, returns JWT
+- `GET/PUT /api/user` — profile + settings (including weatherCity)
+- `GET /api/data` — fetch ALL user data in one call (used for sync on login)
+- CRUD endpoints for each entity:
+  - `/api/transactions`, `/api/transactions/<id>`
+  - `/api/budgets`, `/api/budgets/<id>`
+  - `/api/goals`, `/api/goals/<id>`
+  - `/api/investments`, `/api/investments/<id>`
+  - `/api/banks`, `/api/banks/<id>`
+  - `/api/cards`, `/api/cards/<id>`
+  - `/api/subscriptions`, `/api/subscriptions/<id>`
+  - `/api/lending`, `/api/lending/<id>`
+- `GET /api/market/quotes?symbols=` — Yahoo Finance proxy (live indices + stocks)
+- `GET /api/market/crypto` — CoinGecko proxy (BTC + ETH in INR/USD)
+
+## Features
 
 ### Dashboard
 - Time-based greeting card with live weather (Open-Meteo)
-- **Weather** — geolocation with IP-based fallback via ipapi.co (no API key required)
-- **AI Insights** — dynamically computed from real transaction/budget/goal data (top spend, savings rate, budget alerts, goal progress, recurring detection)
-- Dashboard stat cards with icons (Income, Expenses, Net Worth, Savings Rate)
-- **Charts** — Income vs Expenses bar chart + Cash Flow Forecast line chart with hover tooltips, ResizeObserver responsive re-render, and mobile-adaptive donut chart
-
-### Transactions
-- Full-featured filter bar: search, type pills, category dropdown, sort, clear
-- Fuzzy search across description, category, bank, tags
-- Tap-to-detail modal (clean, no hover cards)
-- CSV import with 3-step quick-start guide + download template button
-- Export as CSV or JSON backup
+- **Weather location**: city set in Settings → "Location & Weather" section (saved to user profile), falls back to GPS → IP → Mumbai
+- **AI Insights** — dynamically computed from real data
+- **Charts** — mobile-scrollable (chart-scroll wrapper), hover tooltips, ResizeObserver
 
 ### Market Pulse (Investments)
-- Live crypto prices via CoinGecko
-- **Two-tab ticker modal** — "Indices & Crypto" tab (existing 11 items) + "Stocks" tab (12 Indian NSE stocks + 7 US stocks)
-- Live stock prices via Yahoo Finance API (`query2.finance.yahoo.com`) with allorigins.win CORS proxy
-- Customizable with toggle chips, persisted in `selectedTickers` + `selectedStocks` Sets
+- **Fully live data** via server-side proxy (no CORS issues)
+- All indices: Nifty 50 (^NSEI), Sensex (^BSESN), Nifty Bank (^NSEBANK), S&P 500, NASDAQ, Dow Jones
+- Commodities: Gold, Silver, Crude Oil (Yahoo Finance futures)
+- Crypto: BTC + ETH via CoinGecko
+- Stocks tab: 12 Indian NSE stocks + 7 US stocks via Yahoo Finance v8
 
-### Goals & Savings, Subscriptions, Investments
-- All stat cards updated with icon-header structure (stat-icon + stat-label + stat-value)
+### Settings
+- **Location & Weather** section: text input for city, saved to user profile + synced
 
-### Form Consistency
-- `.period-select` matches `.form-select` (border-radius, transition, hover/focus states)
-- All selects and inputs use consistent `var(--radius-md)` border radius
-
-### Reports / CSV
-- Import modal has a prominent 3-step quick-start guide with code-formatted column hints
-- Template download button placed prominently above the drop zone
-
-## Pages
-dashboard, transactions, budgets, lending, subscriptions, banks, investments, reports, settings
-
-## Key Files
-- `index.html` — entire application (~2012 lines)
-
-## Running
-Workflow: `python3 -m http.server 5000` on port 5000 (webview)
-
-## External APIs Used (all free, no keys)
+## External APIs Used (all free, no API keys needed)
 - Open-Meteo — weather forecast
-- ipapi.co — IP geolocation fallback for weather
-- Nominatim (OpenStreetMap) — reverse geocoding for city name
-- CoinGecko — live Bitcoin/Ethereum prices in INR
-- Yahoo Finance v7 — live stock quotes (via allorigins.win CORS proxy)
+- Nominatim (OpenStreetMap) — city geocoding + reverse geocoding
+- ipapi.co — IP geolocation fallback
+- CoinGecko — BTC/ETH prices in INR/USD (via server proxy)
+- Yahoo Finance v8 — all stock/index/commodity prices (via server proxy)
+
+## Python Dependencies
+- flask, flask-cors, pyjwt, bcrypt, requests

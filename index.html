@@ -454,27 +454,141 @@ select option{background:var(--surface);color:var(--text)}
   .tx-filter-bar{gap:.375rem}
 }
 .hidden{display:none!important}
+/* ── Onboarding ── */
+.onboarding-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#f0fdf4,#ecfdf5,#f0fdf4);z-index:10000;display:flex;align-items:center;justify-content:center;padding:1.5rem;overflow-y:auto;}
+body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e293b);}
+.onboarding-card{background:var(--surface);border-radius:var(--radius-xl);padding:2.5rem;max-width:520px;width:100%;box-shadow:var(--shadow-xl);border:1px solid var(--border-light);}
+.onboarding-steps{display:flex;gap:.5rem;margin-bottom:2rem;justify-content:center;}
+.ob-step{width:28px;height:4px;border-radius:2px;background:var(--border);transition:background .3s,width .3s;}
+.ob-step.active{background:var(--primary);width:48px;}
+.ob-step.done{background:var(--accent);}
+.ob-step-panel{display:none;animation:fadeInUp .35s ease;}
+.ob-step-panel.active{display:block;}
+.ob-emoji{font-size:3rem;margin-bottom:1rem;display:block;text-align:center;}
+.ob-title{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:700;text-align:center;margin-bottom:.5rem;}
+.ob-sub{text-align:center;color:var(--text-2);font-size:.9rem;margin-bottom:1.75rem;line-height:1.6;}
+.ob-option-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.5rem;}
+.ob-option{border:2px solid var(--border);border-radius:var(--radius-md);padding:1rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);}
+.ob-option:hover{border-color:var(--accent);background:var(--bg-alt);}
+.ob-option.selected{border-color:var(--primary);background:rgba(4,120,87,.07);}
+.ob-option-icon{font-size:1.75rem;margin-bottom:.5rem;}
+.ob-option-label{font-size:.85rem;font-weight:600;color:var(--text);}
+.ob-option-sub{font-size:.75rem;color:var(--text-2);margin-top:.2rem;}
+.ob-nav{display:flex;gap:.75rem;margin-top:1.5rem;}
+.ob-nav button{flex:1;}
+/* Auth tabs */
+.auth-tabs{display:flex;gap:0;margin-bottom:1.75rem;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border);}
+.auth-tab{flex:1;padding:.7rem;border:none;background:var(--bg);color:var(--text-2);font-weight:600;font-size:.875rem;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.auth-tab.active{background:var(--primary);color:#fff;}
+/* Loading spinner */
+.sync-spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:.5rem;}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Chart scroll on mobile */
+.chart-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.chart-scroll svg{min-width:340px;}
 </style>
 </head>
 <body>
 <div id="toastContainer"></div>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-<!-- LOGIN -->
+<!-- ONBOARDING WIZARD -->
+<div id="onboardingPage" class="onboarding-overlay hidden">
+  <div class="onboarding-card">
+    <div class="login-logo" style="margin-bottom:1.5rem;">
+      <div class="login-logo-icon">FF</div>
+    </div>
+    <div class="onboarding-steps" id="obSteps">
+      <div class="ob-step active" id="obs0"></div>
+      <div class="ob-step" id="obs1"></div>
+      <div class="ob-step" id="obs2"></div>
+    </div>
+    <!-- Step 0: Welcome choice -->
+    <div class="ob-step-panel active" id="obPanel0">
+      <span class="ob-emoji">👋</span>
+      <h2 class="ob-title">Welcome to FinanceFlow!</h2>
+      <p class="ob-sub">How would you like to get started? You can always change everything later.</p>
+      <div class="ob-option-grid">
+        <div class="ob-option selected" id="obOptQuick" onclick="selectObOption('quick')">
+          <div class="ob-option-icon">⚡</div>
+          <div class="ob-option-label">Quick Start</div>
+          <div class="ob-option-sub">Jump in with sample data, customize later</div>
+        </div>
+        <div class="ob-option" id="obOptSetup" onclick="selectObOption('setup')">
+          <div class="ob-option-icon">🛠️</div>
+          <div class="ob-option-label">Full Setup</div>
+          <div class="ob-option-sub">Set up monthly income & primary goals now</div>
+        </div>
+      </div>
+      <div class="ob-nav"><button class="btn btn-primary" style="justify-content:center;" onclick="obNext()">Continue →</button></div>
+    </div>
+    <!-- Step 1: Quick profile -->
+    <div class="ob-step-panel" id="obPanel1">
+      <span class="ob-emoji">👤</span>
+      <h2 class="ob-title">About You</h2>
+      <p class="ob-sub">Just a couple of details to personalise your experience.</p>
+      <div class="form-group"><label class="form-label">Your First Name</label><input type="text" class="form-input" id="obName" placeholder="e.g. Rahul"></div>
+      <div class="form-group"><label class="form-label">Your City (for weather)</label><input type="text" class="form-input" id="obCity" placeholder="e.g. Mumbai"></div>
+      <div class="form-group"><label class="form-label">Monthly Income (₹) <span style="color:var(--text-3);font-weight:400;font-size:.8rem;">optional</span></label><input type="number" class="form-input" id="obIncome" placeholder="e.g. 85000" min="0"></div>
+      <div id="obFullSetupExtra" class="hidden">
+        <div class="form-group"><label class="form-label">Primary Financial Goal</label>
+          <select class="form-select" id="obGoalType"><option value="">Select a goal</option><option>Emergency Fund</option><option>Home Down Payment</option><option>Vehicle</option><option>Vacation</option><option>Retirement</option><option>Education</option><option>Wedding</option><option>Other</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Target Amount (₹)</label><input type="number" class="form-input" id="obGoalAmount" placeholder="e.g. 500000" min="0"></div>
+      </div>
+      <div class="ob-nav">
+        <button class="btn btn-secondary" style="justify-content:center;" onclick="obBack()">← Back</button>
+        <button class="btn btn-primary" style="justify-content:center;" onclick="obNext()">Continue →</button>
+      </div>
+    </div>
+    <!-- Step 2: All done -->
+    <div class="ob-step-panel" id="obPanel2">
+      <span class="ob-emoji">🎉</span>
+      <h2 class="ob-title">You're all set!</h2>
+      <p class="ob-sub">Your FinanceFlow account is ready. Your data syncs automatically across all devices when you're signed in.</p>
+      <div style="background:var(--bg-alt);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1.5rem;text-align:left;">
+        <div style="font-size:.875rem;font-weight:600;margin-bottom:.75rem;color:var(--text);">What syncs automatically:</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.85rem;color:var(--text-2);">
+          <div>✅ Transactions, Budgets &amp; Goals</div>
+          <div>✅ Investments, Banks &amp; Cards</div>
+          <div>✅ Subscriptions, Lending records</div>
+          <div>✅ Settings &amp; preferences</div>
+        </div>
+      </div>
+      <div class="ob-nav"><button class="btn btn-primary" style="justify-content:center;" onclick="finishOnboarding()" id="obFinishBtn">Launch FinanceFlow 🚀</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH (Login / Register) -->
 <div id="loginPage" class="login-container">
   <div class="login-card">
     <div class="login-logo">
       <div class="login-logo-icon">FF</div>
-      <h1 class="login-title">Welcome back</h1>
-      <p class="login-subtitle">Sign in to your FinanceFlow account</p>
+      <h1 class="login-title" id="authTitle">Welcome back</h1>
+      <p class="login-subtitle" id="authSubtitle">Sign in to your FinanceFlow account</p>
     </div>
-    <form id="loginForm">
-      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" placeholder="your@email.com" required></div>
-      <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" placeholder="••••••••" required></div>
-      <div class="checkbox-group"><input type="checkbox" id="rememberMe"><label for="rememberMe">Remember me for 30 days</label></div>
-      <button type="submit" class="btn btn-primary" style="width:100%;margin-top:1.25rem;justify-content:center;padding:.875rem;">Sign In →</button>
-      <div style="text-align:center;margin-top:.875rem;"><a href="#" style="color:var(--primary);text-decoration:none;font-size:.85rem;font-weight:500;">Forgot password?</a></div>
-    </form>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabSignIn" onclick="switchAuthTab('signin')">Sign In</button>
+      <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Create Account</button>
+    </div>
+    <!-- Sign In -->
+    <div id="signInPanel">
+      <div id="authError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius-md);padding:.75rem 1rem;font-size:.875rem;color:#b91c1c;margin-bottom:1rem;"></div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="loginEmail" placeholder="your@email.com" autocomplete="email"></div>
+      <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="loginPassword" placeholder="••••••••" autocomplete="current-password"></div>
+      <div class="checkbox-group"><input type="checkbox" id="rememberMe" checked><label for="rememberMe">Keep me signed in</label></div>
+      <button class="btn btn-primary" id="signInBtn" style="width:100%;margin-top:1.25rem;justify-content:center;padding:.875rem;" onclick="doSignIn()">Sign In →</button>
+      <div style="text-align:center;margin-top:.875rem;"><a href="#" style="color:var(--primary);text-decoration:none;font-size:.85rem;font-weight:500;" onclick="return false;">Forgot password?</a></div>
+    </div>
+    <!-- Register -->
+    <div id="registerPanel" style="display:none;">
+      <div id="regError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius-md);padding:.75rem 1rem;font-size:.875rem;color:#b91c1c;margin-bottom:1rem;"></div>
+      <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" id="regName" placeholder="Rahul Sharma" autocomplete="name"></div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="regEmail" placeholder="your@email.com" autocomplete="email"></div>
+      <div class="form-group"><label class="form-label">Password <span style="color:var(--text-3);font-size:.78rem;font-weight:400;">(min 6 chars)</span></label><input type="password" class="form-input" id="regPassword" placeholder="Choose a strong password" autocomplete="new-password"></div>
+      <button class="btn btn-primary" id="registerBtn" style="width:100%;margin-top:.5rem;justify-content:center;padding:.875rem;" onclick="doRegister()">Create Account →</button>
+    </div>
   </div>
 </div>
 
@@ -555,7 +669,7 @@ select option{background:var(--surface);color:var(--text)}
       <div class="two-col">
         <div class="card" style="margin-bottom:0;">
           <div class="card-header"><h2 class="card-title">Income vs Expenses</h2><select class="period-select" id="chartPeriod" onchange="renderIncomeExpenseChart()"><option>Last 6 Months</option><option>Last 3 Months</option><option>This Year</option></select></div>
-          <div id="incomeExpenseChart" style="position:relative;height:240px;"></div>
+          <div class="chart-scroll"><div id="incomeExpenseChart" style="position:relative;height:240px;min-width:320px;"></div></div>
           <div style="display:flex;gap:1.25rem;margin-top:.75rem;justify-content:center;">
             <div style="display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--text-2);"><span style="width:10px;height:10px;border-radius:3px;background:#22C55E;display:inline-block;"></span>Income</div>
             <div style="display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--text-2);"><span style="width:10px;height:10px;border-radius:3px;background:#EF4444;display:inline-block;"></span>Expenses</div>
@@ -569,7 +683,7 @@ select option{background:var(--surface);color:var(--text)}
           </div>
         </div>
       </div>
-      <div class="card"><div class="card-header"><h2 class="card-title">💡 Cash Flow Forecast</h2><span style="font-size:.8rem;color:var(--text-2);">Next 3 months</span></div><div id="forecastChart" style="position:relative;height:200px;"></div></div>
+      <div class="card"><div class="card-header"><h2 class="card-title">💡 Cash Flow Forecast</h2><span style="font-size:.8rem;color:var(--text-2);">Next 3 months</span></div><div class="chart-scroll"><div id="forecastChart" style="position:relative;height:200px;min-width:320px;"></div></div></div>
       <div class="card"><div class="card-header"><h2 class="card-title">Recent Transactions</h2><button class="btn btn-ghost" onclick="navigateTo('transactions')">View All →</button></div><div id="recentTransactions"></div></div>
       <div class="card"><div class="card-header"><h2 class="card-title">Budget Overview</h2><button class="btn btn-ghost" onclick="navigateTo('budgets')">Manage →</button></div><div id="budgetOverview"></div></div>
       <div class="card"><div class="card-header"><h2 class="card-title">🏆 Goals Progress</h2><button class="btn btn-ghost" onclick="navigateTo('goals')">All Goals →</button></div><div id="goalsOverview"></div></div>
@@ -765,10 +879,20 @@ select option{background:var(--surface);color:var(--text)}
           <div class="settings-item" onclick="openNavCustomizeModal()"><div class="settings-item-info"><div class="settings-item-title">Customize Bottom Tabs</div><div class="settings-item-description">Drag to reorder, select to toggle (max 5)</div></div><span class="settings-chevron">›</span></div>
         </div>
         <div class="settings-section">
+          <h3 class="settings-section-title">Location &amp; Weather</h3>
+          <div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:.75rem;cursor:default;">
+            <div class="settings-item-info"><div class="settings-item-title">Weather Location</div><div class="settings-item-description">City used for dashboard weather. Leave blank to use device GPS.</div></div>
+            <div style="display:flex;gap:.5rem;width:100%;">
+              <input type="text" class="form-input" id="weatherCityInput" placeholder="e.g. Mumbai, Delhi, Bangalore" style="flex:1;font-size:.875rem;padding:.5rem .75rem;">
+              <button class="btn btn-primary btn-sm" onclick="saveWeatherCity()">Save</button>
+            </div>
+          </div>
+        </div>
+        <div class="settings-section">
           <h3 class="settings-section-title">Account</h3>
           <div class="settings-item" onclick="openProfileModal()"><div class="settings-item-info"><div class="settings-item-title">Profile Information</div></div><span class="settings-chevron">›</span></div>
           <div class="settings-item" onclick="openSecurityModal()"><div class="settings-item-info"><div class="settings-item-title">Security</div><div class="settings-item-description">Password, PIN, 2FA, Biometrics</div></div><span class="settings-chevron">›</span></div>
-          <div class="settings-item" onclick="if(confirm('Sign out?'))location.reload()"><div class="settings-item-info"><div class="settings-item-title" style="color:var(--danger);">Sign Out</div></div><span class="settings-chevron" style="color:var(--danger);">›</span></div>
+          <div class="settings-item" onclick="doSignOut()"><div class="settings-item-info"><div class="settings-item-title" style="color:var(--danger);">Sign Out</div></div><span class="settings-chevron" style="color:var(--danger);">›</span></div>
         </div>
       </div>
     </div>
@@ -1189,7 +1313,8 @@ function closeSidebar(){document.getElementById('sidebar').classList.remove('mob
 
 /* ══ GREETING + WEATHER ══ */
 function updateGreeting(){
-  const hr=new Date().getHours();const name=document.getElementById('profileFirstName')?.value||'Rahul';
+  const hr=new Date().getHours();
+  const name=currentUser?.name?.split(' ')[0]||document.getElementById('profileFirstName')?.value||'there';
   const emojis=['☀️','👋','🌆','🌙'];const greets=['Good morning','Good afternoon','Good evening','Good night'];
   const g=hr<12?0:hr<17?1:hr<21?2:3;
   document.getElementById('greetingText').textContent=`${greets[g]}, ${name}! ${emojis[g]}`;
@@ -1201,15 +1326,33 @@ function updateGreeting(){
   document.getElementById('greetingFun').textContent=funQuotes[d.getDate()%funQuotes.length];
 }
 const wcMap={0:'☀️ Clear sky',1:'🌤️ Mainly clear',2:'⛅ Partly cloudy',3:'☁️ Overcast',45:'🌫️ Foggy',51:'🌦️ Light drizzle',61:'🌧️ Slight rain',63:'🌧️ Moderate rain',65:'🌧️ Heavy rain',71:'❄️ Slight snow',80:'🌦️ Showers',95:'⛈️ Thunderstorm'};
+let _weatherCity='';
+function saveWeatherCity(){
+  const city=(document.getElementById('weatherCityInput')?.value||'').trim();
+  _weatherCity=city;
+  apiPut('/api/user',{settings:{weatherCity:city}}).catch(()=>{});
+  toast('Weather location saved!');
+  fetchWeather();
+}
 async function fetchWeather(){
   try{
     let lat,lon,locName;
-    try{
-      const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:5000}));
-      lat=pos.coords.latitude;lon=pos.coords.longitude;
-    }catch{
-      try{const ipd=await fetch('https://ipapi.co/json/').then(r=>r.json());lat=ipd.latitude;lon=ipd.longitude;locName=ipd.city||ipd.region;}
-      catch{lat=19.076;lon=72.877;locName='Mumbai';}
+    // Priority: 1) Settings city  2) GPS  3) IP  4) Mumbai
+    if(_weatherCity){
+      try{
+        const gc=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(_weatherCity)}&format=json&limit=1`);
+        const gd=await gc.json();
+        if(gd&&gd[0]){lat=parseFloat(gd[0].lat);lon=parseFloat(gd[0].lon);locName=_weatherCity;}
+      }catch{}
+    }
+    if(!lat){
+      try{
+        const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:5000}));
+        lat=pos.coords.latitude;lon=pos.coords.longitude;
+      }catch{
+        try{const ipd=await fetch('https://ipapi.co/json/').then(r=>r.json());lat=ipd.latitude;lon=ipd.longitude;locName=ipd.city||ipd.region;}
+        catch{lat=19.076;lon=72.877;locName='Mumbai';}
+      }
     }
     const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(2)}&longitude=${lon.toFixed(2)}&current=temperature_2m,weather_code&timezone=auto`);
     const d=await r.json();
@@ -1292,20 +1435,33 @@ async function fetchStockPrices(){
   if(!selectedStocks.size)return;
   const symbols=[...selectedStocks].join(',');
   try{
-    const url=`https://query2.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols)}`;
-    const proxy=`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-    const r=await fetch(proxy,{signal:AbortSignal.timeout(8000)});
-    const d=await r.json();
-    (d?.quoteResponse?.result||[]).forEach(q=>{stockPrices[q.symbol]={price:q.regularMarketPrice,chg:q.regularMarketChangePercent};});
+    const d=await apiFetch(`/api/market/quotes?symbols=${encodeURIComponent(symbols)}`);
+    Object.entries(d).forEach(([sym,data])=>{
+      if(data)stockPrices[sym]={price:data.price,chg:data.change};
+    });
   }catch(e){console.warn('Stock fetch failed',e);}
 }
 async function fetchMarketData(){
-  document.getElementById('refreshMktBtn').textContent='↻ Loading…';
+  const btn=document.getElementById('refreshMktBtn');if(btn)btn.textContent='↻ Loading…';
+  // Fetch all index symbols via our proxy
+  const idxSymbols={nifty50:'^NSEI',sensex:'^BSESN',niftybank:'^NSEBANK',sp500:'^GSPC',nasdaq:'^IXIC',dowjones:'^DJI',gold:'GC=F',silver:'SI=F',crude:'CL=F'};
+  const cryptoIds={bitcoin:'BTC-USD',ethereum:'ETH-USD'};
+  const allProxySyms=[...Object.values(idxSymbols),...Object.values(cryptoIds)].join(',');
+  let liveData={};
+  try{liveData=await apiFetch(`/api/market/quotes?symbols=${encodeURIComponent(allProxySyms)}`);}catch{}
+  // Map live data back to marketItems
+  marketItems.forEach(m=>{
+    const sym=idxSymbols[m.id]||cryptoIds[m.id];
+    if(sym&&liveData[sym]){
+      m.price=liveData[sym].price;
+      m.chg=liveData[sym].change;
+    }
+  });
   let crypto=null;
-  try{const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=inr');crypto=await r.json();}catch{}
+  try{crypto=await apiFetch('/api/market/crypto');}catch{}
   await fetchStockPrices();
   renderMarketPulse(crypto);
-  document.getElementById('refreshMktBtn').textContent='↻ Refresh';
+  if(btn)btn.textContent='↻ Refresh';
 }
 function switchTickerTab(btn,tab){
   document.querySelectorAll('.ticker-tab').forEach(t=>t.classList.remove('active'));
@@ -1563,7 +1719,7 @@ function showTxDetail(id){
   document.getElementById('txDetailTitle').innerHTML=`${t.icon} <span class="badge badge-${t.type==='income'?'green':'red'}">${t.type}</span>`;
   document.getElementById('txDetailInner').className=`modal ${t.type}-mode`;
   document.getElementById('txDetailBody').innerHTML=`<div class="tx-detail-amount" style="color:${col};">${pre}₹${t.amount.toLocaleString('en-IN')}</div><div class="tx-detail-row"><span class="tx-detail-label">Description</span><span class="tx-detail-value">${t.description}</span></div><div class="tx-detail-row"><span class="tx-detail-label">Category</span><span class="tx-detail-value">${t.category}</span></div><div class="tx-detail-row"><span class="tx-detail-label">Date</span><span class="tx-detail-value">${formatDate(t.date)}</span></div><div class="tx-detail-row"><span class="tx-detail-label">Payment</span><span class="tx-detail-value">${t.payment}</span></div><div class="tx-detail-row"><span class="tx-detail-label">Account</span><span class="tx-detail-value">${t.bank}</span></div>${t.tags?`<div class="tx-detail-row"><span class="tx-detail-label">Tags</span><span class="tx-detail-value">${t.tags.split(',').map(g=>`<span class="badge badge-gray">${g.trim()}</span>`).join(' ')}</span></div>`:''} ${t.notes?`<div class="tx-detail-row"><span class="tx-detail-label">Notes</span><span class="tx-detail-value" style="text-align:left;font-weight:400;">${t.notes}</span></div>`:''} ${t.recurring?`<div class="tx-detail-row"><span class="tx-detail-label">Recurring</span><span class="tx-detail-value"><span class="badge badge-blue">Yes</span></span></div>`:''}`;
-  document.getElementById('txDetailDelete').onclick=()=>{if(confirm('Delete this transaction?')){demoTransactions.splice(demoTransactions.findIndex(x=>x.id===id),1);closeModal('txDetailModal');toast('Transaction deleted');renderAllTransactions();renderRecentTransactions();}};
+  document.getElementById('txDetailDelete').onclick=()=>{if(confirm('Delete this transaction?')){if(_authToken)apiDeleteTransaction(id);demoTransactions.splice(demoTransactions.findIndex(x=>x.id===id),1);closeModal('txDetailModal');toast('Transaction deleted');renderAllTransactions();renderRecentTransactions();}};
   document.getElementById('txDetailModal').classList.add('active');
 }
 
@@ -1645,7 +1801,7 @@ function showSubDetail(id){
   const d=daysUntil(s.nextRenewal);const annualCost=s.cycle==='Monthly'?s.amount*12:s.cycle==='Quarterly'?s.amount*4:s.amount;
   document.getElementById('subDetailTitle').innerHTML=`${s.icon} ${s.service}`;
   document.getElementById('subDetailBody').innerHTML=`<div class="tx-detail-amount" style="color:var(--primary);">₹${s.amount.toLocaleString('en-IN')} <span style="font-size:1.1rem;font-weight:500;color:var(--text-2);">/${s.cycle.toLowerCase()}</span></div><div class="tx-detail-row"><span class="tx-detail-label">Category</span><span class="tx-detail-value">${s.category}</span></div><div class="tx-detail-row"><span class="tx-detail-label">Billing Cycle</span><span class="tx-detail-value">${s.cycle}</span></div><div class="tx-detail-row"><span class="tx-detail-label">Started</span><span class="tx-detail-value">${formatDate(s.startDate)}</span></div><div class="tx-detail-row"><span class="tx-detail-label">Next Renewal</span><span class="tx-detail-value">${formatDate(s.nextRenewal)}${d<=3?` <span class="badge badge-amber">In ${d}d</span>`:''}</span></div><div class="tx-detail-row"><span class="tx-detail-label">Payment</span><span class="tx-detail-value">${s.payment}</span></div><div class="tx-detail-row"><span class="tx-detail-label">Auto-Renewal</span><span class="tx-detail-value">${s.autoRenew?'<span class="badge badge-green">On</span>':'<span class="badge badge-gray">Off</span>'}</span></div><div class="tx-detail-row"><span class="tx-detail-label">Annual Cost</span><span class="tx-detail-value" style="color:var(--danger);">₹${annualCost.toLocaleString('en-IN')}</span></div>`;
-  document.getElementById('subDetailDelete').onclick=()=>{if(confirm(`Cancel ${s.service}?`)){demoSubscriptions.splice(demoSubscriptions.findIndex(x=>x.id===id),1);closeModal('subDetailModal');toast(`${s.service} cancelled`);renderSubscriptions();}};
+  document.getElementById('subDetailDelete').onclick=()=>{if(confirm(`Cancel ${s.service}?`)){if(_authToken)apiDeleteSubscription(id);demoSubscriptions.splice(demoSubscriptions.findIndex(x=>x.id===id),1);closeModal('subDetailModal');toast(`${s.service} cancelled`);renderSubscriptions();}};
   document.getElementById('subDetailModal').classList.add('active');
 }
 
@@ -1719,8 +1875,8 @@ function renderPmList(){
     list.innerHTML=demoCards.map(c=>`<div class="account-list-item"><div class="account-list-icon card-icon">${c.icon}</div><div class="account-list-info"><div class="account-list-name">${c.nickname}</div><div class="account-list-meta">${c.type} · ${c.network} · ${c.bank} · ····${c.last4} · Exp ${c.expiry}${c.type==='Credit Card'?` · Limit ₹${c.limit.toLocaleString('en-IN')} · Stmt ${c.statementDay}th · Due ${c.dueDay}th`:''}</div></div><div class="account-list-actions"><button class="btn btn-secondary btn-sm" onclick="editCard(${c.id})">Edit</button><button class="btn btn-danger btn-sm" onclick="removeCard(${c.id})">Remove</button></div></div>`).join('');
   }
 }
-function removeBankAccount(id){if(!confirm('Remove this account?'))return;demoBanks=demoBanks.filter(b=>b.id!==id);renderPmList();renderBanks();toast('Account removed');}
-function removeCard(id){if(!confirm('Remove this card?'))return;demoCards=demoCards.filter(c=>c.id!==id);renderPmList();renderBanks();toast('Card removed');}
+function removeBankAccount(id){if(!confirm('Remove this account?'))return;if(_authToken)apiDeleteBank(id);demoBanks=demoBanks.filter(b=>b.id!==id);renderPmList();renderBanks();toast('Account removed');}
+function removeCard(id){if(!confirm('Remove this card?'))return;if(_authToken)apiDeleteCard(id);demoCards=demoCards.filter(c=>c.id!==id);renderPmList();renderBanks();toast('Card removed');}
 function editCard(id){
   const c=demoCards.find(x=>x.id===id);if(!c)return;
   document.getElementById('editCardId').value=id;document.getElementById('editCardType').value=c.type;document.getElementById('editCardNetwork').value=c.network;document.getElementById('editCardBank').value=c.bank;document.getElementById('editCardNickname').value=c.nickname;document.getElementById('editCardLast4').value=c.last4;document.getElementById('editCardExpiry').value=c.expiry;
@@ -1764,57 +1920,73 @@ function setupPillToggles(){
 function setupFormHandlers(){
   document.getElementById('transactionForm').addEventListener('submit',function(e){
     e.preventDefault();const type=document.querySelector('#transactionTypePill .pill-option.active').dataset.type;const amount=parseFloat(document.getElementById('transactionAmount').value);if(!amount||amount<=0){toast('Enter a valid amount.','error');return;}
-    demoTransactions.unshift({id:Date.now(),type,amount,description:document.getElementById('transactionDescription').value,category:document.getElementById('transactionCategory').value,date:document.getElementById('transactionDate').value,icon:getCategoryIcon(document.getElementById('transactionCategory').value),payment:document.getElementById('transactionPayment').value,bank:document.getElementById('transactionBank').value,tags:document.getElementById('transactionTags').value,notes:document.getElementById('transactionNotes').value,recurring:document.getElementById('recurring').checked});
+    const tx={id:Date.now(),type,amount,description:document.getElementById('transactionDescription').value,category:document.getElementById('transactionCategory').value,date:document.getElementById('transactionDate').value,icon:getCategoryIcon(document.getElementById('transactionCategory').value),payment:document.getElementById('transactionPayment').value,bank:document.getElementById('transactionBank').value,tags:document.getElementById('transactionTags').value,notes:document.getElementById('transactionNotes').value,recurring:document.getElementById('recurring').checked};
+    demoTransactions.unshift(tx);
+    if(_authToken)apiSaveTransaction(tx);
     toast('Transaction added!');closeModal('addTransactionModal');this.reset();renderDashboard();updateNotifBadge();
   });
   document.getElementById('budgetForm').addEventListener('submit',function(e){
     e.preventDefault();const amount=parseFloat(document.getElementById('budgetAmount').value);if(!amount||amount<=0){toast('Enter a valid amount.','error');return;}
-    demoBudgets.push({category:document.getElementById('budgetCategory').value,limit:amount,spent:0,icon:getCategoryIcon(document.getElementById('budgetCategory').value),period:document.getElementById('budgetPeriod').value,alert:document.getElementById('budgetAlert').value});
+    const b={id:Date.now(),category:document.getElementById('budgetCategory').value,limit:amount,spent:0,icon:getCategoryIcon(document.getElementById('budgetCategory').value),period:document.getElementById('budgetPeriod').value,alert:document.getElementById('budgetAlert').value};
+    demoBudgets.push(b);
+    if(_authToken)apiSaveBudget(b);
     toast('Budget created!');closeModal('addBudgetModal');this.reset();navigateTo('budgets');
   });
   document.getElementById('lendingForm').addEventListener('submit',function(e){
     e.preventDefault();const type=document.querySelector('#lendingTypePill .pill-option.active').dataset.type;const amount=parseFloat(document.getElementById('lendingAmount').value);if(!amount||amount<=0){toast('Enter a valid amount.','error');return;}
-    demoLending.push({id:Date.now(),type:type==='lending'?'lent':'borrowed',person:document.getElementById('lendingPerson').value,amount,interest:parseFloat(document.getElementById('lendingInterest').value)||0,mode:document.getElementById('lendingMode').value,startDate:document.getElementById('lendingStartDate').value,returnDate:document.getElementById('lendingReturnDate').value,status:'pending'});
+    const l={id:Date.now(),type:type==='lending'?'lent':'borrowed',person:document.getElementById('lendingPerson').value,amount,interest:parseFloat(document.getElementById('lendingInterest').value)||0,mode:document.getElementById('lendingMode').value,startDate:document.getElementById('lendingStartDate').value,returnDate:document.getElementById('lendingReturnDate').value,status:'pending'};
+    demoLending.push(l);
+    if(_authToken)apiSaveLending(l);
     toast('Record added!');closeModal('addLendingModal');this.reset();navigateTo('lending');
   });
   document.getElementById('subscriptionForm').addEventListener('submit',function(e){
     e.preventDefault();const svc=document.getElementById('subscriptionService').value;const serviceName=svc==='Custom Service'?document.getElementById('customServiceName').value:svc;if(!serviceName){toast('Enter service name.','error');return;}const amount=parseFloat(document.getElementById('subscriptionCost').value);if(!amount){toast('Enter cost.','error');return;}
-    demoSubscriptions.push({id:Date.now(),service:serviceName,category:document.getElementById('subscriptionCategory').value,amount,cycle:document.getElementById('subscriptionCycle').value,startDate:document.getElementById('subscriptionStartDate').value,nextRenewal:document.getElementById('subscriptionRenewalDate').value,icon:getCategoryIcon(document.getElementById('subscriptionCategory').value),payment:document.getElementById('subscriptionPayment').value,autoRenew:document.getElementById('autoRenewal').checked});
+    const s={id:Date.now(),service:serviceName,category:document.getElementById('subscriptionCategory').value,amount,cycle:document.getElementById('subscriptionCycle').value,startDate:document.getElementById('subscriptionStartDate').value,nextRenewal:document.getElementById('subscriptionRenewalDate').value,icon:getCategoryIcon(document.getElementById('subscriptionCategory').value),payment:document.getElementById('subscriptionPayment').value,autoRenew:document.getElementById('autoRenewal').checked};
+    demoSubscriptions.push(s);
+    if(_authToken)apiSaveSubscription(s);
     toast('Subscription added!');closeModal('addSubscriptionModal');this.reset();navigateTo('subscriptions');updateNotifBadge();
   });
   document.getElementById('bankForm').addEventListener('submit',function(e){
     e.preventDefault();const name=document.getElementById('bankName').value,bal=parseFloat(document.getElementById('bankBalance').value);if(!name||isNaN(bal)){toast('Fill required fields.','error');return;}
-    demoBanks.push({id:Date.now(),name,type:document.getElementById('bankType').value,nickname:document.getElementById('bankNickname').value||name,balance:bal,asOf:document.getElementById('bankAsOf').value,icon:'🏦'});
+    const b={id:Date.now(),name,type:document.getElementById('bankType').value,nickname:document.getElementById('bankNickname').value||name,balance:bal,asOf:document.getElementById('bankAsOf').value,icon:'🏦'};
+    demoBanks.push(b);
+    if(_authToken)apiSaveBank(b);
     toast('Account added!');closeModal('addBankModal');this.reset();renderBanks();if(document.getElementById('paymentMethodsModal').classList.contains('active'))renderPmList();
   });
   document.getElementById('cardForm').addEventListener('submit',function(e){
     e.preventDefault();const type=document.getElementById('cardType').value,bank=document.getElementById('cardBank').value,nick=document.getElementById('cardNickname').value,last4=document.getElementById('cardLast4').value,expiry=document.getElementById('cardExpiry').value;
     if(!bank||!nick||!last4||!expiry){toast('Fill required fields.','error');return;}
-    demoCards.push({id:Date.now(),type,network:document.getElementById('cardNetwork').value,bank,nickname:nick,last4,expiry,limit:parseFloat(document.getElementById('cardLimit').value)||0,outstanding:parseFloat(document.getElementById('cardOutstanding').value)||0,statementDay:parseInt(document.getElementById('cardStatementDay').value)||null,dueDay:parseInt(document.getElementById('cardDueDay').value)||null,minPay:parseFloat(document.getElementById('cardMinPay').value)||0,icon:'💳'});
+    const c={id:Date.now(),type,network:document.getElementById('cardNetwork').value,bank,nickname:nick,last4,expiry,limit:parseFloat(document.getElementById('cardLimit').value)||0,outstanding:parseFloat(document.getElementById('cardOutstanding').value)||0,statementDay:parseInt(document.getElementById('cardStatementDay').value)||null,dueDay:parseInt(document.getElementById('cardDueDay').value)||null,minPay:parseFloat(document.getElementById('cardMinPay').value)||0,icon:'💳'};
+    demoCards.push(c);
+    if(_authToken)apiSaveCard(c);
     toast('Card added!');closeModal('addCardModal');this.reset();renderBanks();if(document.getElementById('paymentMethodsModal').classList.contains('active'))renderPmList();
   });
   document.getElementById('investmentForm').addEventListener('submit',function(e){
     e.preventDefault();const invested=parseFloat(document.getElementById('investAmount').value),cv=parseFloat(document.getElementById('investCurrentVal').value);if(!invested||!cv){toast('Enter amounts.','error');return;}
-    demoInvestments.push({id:Date.now(),country:document.getElementById('investCountryForm').value,type:document.getElementById('investType').value,name:document.getElementById('investName').value,invested,currentVal:cv,startDate:document.getElementById('investStartDate').value,platform:document.getElementById('investPlatform').value,notes:document.getElementById('investNotes').value});
+    const inv={id:Date.now(),country:document.getElementById('investCountryForm').value,type:document.getElementById('investType').value,name:document.getElementById('investName').value,invested,currentVal:cv,startDate:document.getElementById('investStartDate').value,platform:document.getElementById('investPlatform').value,notes:document.getElementById('investNotes').value};
+    demoInvestments.push(inv);
+    if(_authToken)apiSaveInvestment(inv);
     toast('Investment added!');closeModal('addInvestmentModal');this.reset();renderInvestments();
   });
   document.getElementById('goalForm').addEventListener('submit',function(e){
     e.preventDefault();const target=parseFloat(document.getElementById('goalTarget').value);if(!target){toast('Enter target amount.','error');return;}
-    demoGoals.push({id:Date.now(),name:document.getElementById('goalName').value,icon:document.getElementById('goalIcon').value||'🎯',target,saved:parseFloat(document.getElementById('goalSaved').value)||0,deadline:document.getElementById('goalDeadline').value,monthly:parseFloat(document.getElementById('goalMonthly').value)||0,category:document.getElementById('goalCategory').value,notes:document.getElementById('goalNotes').value});
+    const g={id:Date.now(),name:document.getElementById('goalName').value,icon:document.getElementById('goalIcon').value||'🎯',target,saved:parseFloat(document.getElementById('goalSaved').value)||0,deadline:document.getElementById('goalDeadline').value,monthly:parseFloat(document.getElementById('goalMonthly').value)||0,category:document.getElementById('goalCategory').value,notes:document.getElementById('goalNotes').value};
+    demoGoals.push(g);
+    if(_authToken)apiSaveGoal(g);
     toast('Goal created!');closeModal('addGoalModal');this.reset();navigateTo('goals');updateNotifBadge();
   });
 }
 
 /* Budget save/delete DOMContentLoaded */
 document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('saveBudgetBtn').onclick=()=>{if(editBudgetIndex<0)return;const b=demoBudgets[editBudgetIndex];b.limit=parseFloat(document.getElementById('editBudgetLimit').value)||b.limit;b.spent=parseFloat(document.getElementById('editBudgetSpent').value)??b.spent;b.period=document.getElementById('editBudgetPeriod').value;b.alert=document.getElementById('editBudgetAlert').value;toast('Budget updated!');closeModal('editBudgetModal');renderAllBudgets();renderBudgetOverview();updateNotifBadge();};
-  document.getElementById('deleteBudgetBtn').onclick=()=>{if(editBudgetIndex<0)return;if(confirm('Delete this budget?')){demoBudgets.splice(editBudgetIndex,1);toast('Budget deleted');closeModal('editBudgetModal');renderAllBudgets();renderBudgetOverview();}};
+  document.getElementById('saveBudgetBtn').onclick=()=>{if(editBudgetIndex<0)return;const b=demoBudgets[editBudgetIndex];b.limit=parseFloat(document.getElementById('editBudgetLimit').value)||b.limit;b.spent=parseFloat(document.getElementById('editBudgetSpent').value)??b.spent;b.period=document.getElementById('editBudgetPeriod').value;b.alert=document.getElementById('editBudgetAlert').value;if(_authToken)apiSaveBudget(b);toast('Budget updated!');closeModal('editBudgetModal');renderAllBudgets();renderBudgetOverview();updateNotifBadge();};
+  document.getElementById('deleteBudgetBtn').onclick=()=>{if(editBudgetIndex<0)return;if(confirm('Delete this budget?')){const b=demoBudgets[editBudgetIndex];if(_authToken)apiDeleteBudget(b.id);demoBudgets.splice(editBudgetIndex,1);toast('Budget deleted');closeModal('editBudgetModal');renderAllBudgets();renderBudgetOverview();}};
   /* Goal save/delete */
-  document.getElementById('saveGoalBtn').onclick=()=>{if(editGoalIndex<0)return;const g=demoGoals[editGoalIndex];g.name=document.getElementById('editGoalName').value;g.icon=document.getElementById('editGoalIcon').value||g.icon;g.target=parseFloat(document.getElementById('editGoalTarget').value)||g.target;g.saved=parseFloat(document.getElementById('editGoalSaved').value)||0;g.deadline=document.getElementById('editGoalDeadline').value;g.monthly=parseFloat(document.getElementById('editGoalMonthly').value)||0;g.notes=document.getElementById('editGoalNotes').value;toast('Goal updated!');closeModal('editGoalModal');renderAllGoals();renderGoalsOverview();updateNotifBadge();};
-  document.getElementById('deleteGoalBtn').onclick=()=>{if(editGoalIndex<0)return;if(confirm('Delete this goal?')){demoGoals.splice(editGoalIndex,1);toast('Goal deleted');closeModal('editGoalModal');renderAllGoals();renderGoalsOverview();}};
+  document.getElementById('saveGoalBtn').onclick=()=>{if(editGoalIndex<0)return;const g=demoGoals[editGoalIndex];g.name=document.getElementById('editGoalName').value;g.icon=document.getElementById('editGoalIcon').value||g.icon;g.target=parseFloat(document.getElementById('editGoalTarget').value)||g.target;g.saved=parseFloat(document.getElementById('editGoalSaved').value)||0;g.deadline=document.getElementById('editGoalDeadline').value;g.monthly=parseFloat(document.getElementById('editGoalMonthly').value)||0;g.notes=document.getElementById('editGoalNotes').value;if(_authToken)apiSaveGoal(g);toast('Goal updated!');closeModal('editGoalModal');renderAllGoals();renderGoalsOverview();updateNotifBadge();};
+  document.getElementById('deleteGoalBtn').onclick=()=>{if(editGoalIndex<0)return;if(confirm('Delete this goal?')){const g=demoGoals[editGoalIndex];if(_authToken)apiDeleteGoal(g.id);demoGoals.splice(editGoalIndex,1);toast('Goal deleted');closeModal('editGoalModal');renderAllGoals();renderGoalsOverview();}};
   /* Edit card save/delete */
-  document.getElementById('saveCardBtn').onclick=()=>{const id=parseInt(document.getElementById('editCardId').value);const c=demoCards.find(x=>x.id===id);if(!c)return;c.type=document.getElementById('editCardType').value;c.network=document.getElementById('editCardNetwork').value;c.bank=document.getElementById('editCardBank').value;c.nickname=document.getElementById('editCardNickname').value;c.last4=document.getElementById('editCardLast4').value;c.expiry=document.getElementById('editCardExpiry').value;if(c.type==='Credit Card'){c.limit=parseFloat(document.getElementById('editCardLimit').value)||0;c.outstanding=parseFloat(document.getElementById('editCardOutstanding').value)||0;c.statementDay=parseInt(document.getElementById('editCardStatementDay').value)||null;c.dueDay=parseInt(document.getElementById('editCardDueDay').value)||null;c.minPay=parseFloat(document.getElementById('editCardMinPay').value)||0;}toast('Card updated!');closeModal('editCardModal');renderPmList();renderBanks();};
-  document.getElementById('deleteCardBtn').onclick=()=>{const id=parseInt(document.getElementById('editCardId').value);if(!confirm('Delete this card?'))return;demoCards=demoCards.filter(c=>c.id!==id);toast('Card deleted');closeModal('editCardModal');renderPmList();renderBanks();};
+  document.getElementById('saveCardBtn').onclick=()=>{const id=parseInt(document.getElementById('editCardId').value);const c=demoCards.find(x=>x.id===id);if(!c)return;c.type=document.getElementById('editCardType').value;c.network=document.getElementById('editCardNetwork').value;c.bank=document.getElementById('editCardBank').value;c.nickname=document.getElementById('editCardNickname').value;c.last4=document.getElementById('editCardLast4').value;c.expiry=document.getElementById('editCardExpiry').value;if(c.type==='Credit Card'){c.limit=parseFloat(document.getElementById('editCardLimit').value)||0;c.outstanding=parseFloat(document.getElementById('editCardOutstanding').value)||0;c.statementDay=parseInt(document.getElementById('editCardStatementDay').value)||null;c.dueDay=parseInt(document.getElementById('editCardDueDay').value)||null;c.minPay=parseFloat(document.getElementById('editCardMinPay').value)||0;}if(_authToken)apiSaveCard(c);toast('Card updated!');closeModal('editCardModal');renderPmList();renderBanks();};
+  document.getElementById('deleteCardBtn').onclick=()=>{const id=parseInt(document.getElementById('editCardId').value);if(!confirm('Delete this card?'))return;if(_authToken)apiDeleteCard(id);demoCards=demoCards.filter(c=>c.id!==id);toast('Card deleted');closeModal('editCardModal');renderPmList();renderBanks();};
   /* Auto-categorize */
   document.getElementById('transactionDescription').addEventListener('input',function(){const kw=this.value.toLowerCase();const map={swiggy:'Food & Dining',zomato:'Food & Dining',barbeque:'Food & Dining',uber:'Transport',ola:'Transport',dmart:'Groceries',bigbasket:'Groceries',netflix:'Entertainment',hotstar:'Entertainment',spotify:'Entertainment',salary:'Salary',freelance:'Freelance'};for(const[k,cat]of Object.entries(map)){if(kw.includes(k)){const sel=document.getElementById('transactionCategory');sel.querySelectorAll('option').forEach(o=>{if(o.textContent.trim()===cat)sel.value=o.value;});break;}}});
   /* CSV drag zone */
@@ -1995,17 +2167,291 @@ function saveNavTabs(){
 /* ══ RESIZE ══ */
 let rsTimer;window.addEventListener('resize',()=>{clearTimeout(rsTimer);rsTimer=setTimeout(()=>{if(!document.getElementById('dashboardPage').classList.contains('hidden')){renderIncomeExpenseChart();renderForecastChart();}},200);});
 
+/* ══ API SERVICE ══ */
+let _authToken=localStorage.getItem('ff_token')||sessionStorage.getItem('ff_token')||'';
+let currentUser=null;
+function authHeaders(){return{'Content-Type':'application/json','Authorization':_authToken?`Bearer ${_authToken}`:''}}
+async function apiFetch(url,opts={}){
+  const r=await fetch(url,{...opts,headers:{...authHeaders(),...(opts.headers||{})}});
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||`HTTP ${r.status}`);}
+  return r.json();
+}
+function apiPost(url,body){return apiFetch(url,{method:'POST',body:JSON.stringify(body)});}
+function apiPut(url,body){return apiFetch(url,{method:'PUT',body:JSON.stringify(body)});}
+function apiDel(url){return apiFetch(url,{method:'DELETE'});}
+
+/* ══ AUTH UI ══ */
+function switchAuthTab(tab){
+  const isSignIn=tab==='signin';
+  document.getElementById('tabSignIn').classList.toggle('active',isSignIn);
+  document.getElementById('tabRegister').classList.toggle('active',!isSignIn);
+  document.getElementById('signInPanel').style.display=isSignIn?'':'none';
+  document.getElementById('registerPanel').style.display=isSignIn?'none':'';
+  document.getElementById('authTitle').textContent=isSignIn?'Welcome back':'Create account';
+  document.getElementById('authSubtitle').textContent=isSignIn?'Sign in to your FinanceFlow account':'Start tracking your finances for free';
+}
+async function doSignIn(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const password=document.getElementById('loginPassword').value;
+  const errEl=document.getElementById('authError');
+  errEl.style.display='none';
+  if(!email||!password){errEl.textContent='Please fill all fields.';errEl.style.display='block';return;}
+  const btn=document.getElementById('signInBtn');
+  btn.innerHTML='<span class="sync-spinner"></span>Signing in…';btn.disabled=true;
+  try{
+    const data=await apiPost('/api/auth/login',{email,password});
+    _authToken=data.token;
+    const remember=document.getElementById('rememberMe').checked;
+    (remember?localStorage:sessionStorage).setItem('ff_token',_authToken);
+    currentUser=data.user;
+    await loadUserData();
+    launchApp();
+  }catch(e){
+    errEl.textContent=e.message||'Sign in failed. Please try again.';errEl.style.display='block';
+  }finally{btn.innerHTML='Sign In →';btn.disabled=false;}
+}
+async function doRegister(){
+  const name=document.getElementById('regName').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const password=document.getElementById('regPassword').value;
+  const errEl=document.getElementById('regError');
+  errEl.style.display='none';
+  if(!name||!email||!password){errEl.textContent='Please fill all fields.';errEl.style.display='block';return;}
+  const btn=document.getElementById('registerBtn');
+  btn.innerHTML='<span class="sync-spinner"></span>Creating account…';btn.disabled=true;
+  try{
+    const data=await apiPost('/api/auth/register',{name,email,password});
+    _authToken=data.token;
+    localStorage.setItem('ff_token',_authToken);
+    currentUser=data.user;
+    // New user → show onboarding
+    document.getElementById('loginPage').classList.add('hidden');
+    document.getElementById('onboardingPage').classList.remove('hidden');
+    document.getElementById('obName').value=name.split(' ')[0];
+  }catch(e){
+    errEl.textContent=e.message||'Registration failed. Please try again.';errEl.style.display='block';
+  }finally{btn.innerHTML='Create Account →';btn.disabled=false;}
+}
+function doSignOut(){
+  if(!confirm('Sign out of FinanceFlow?'))return;
+  _authToken='';currentUser=null;
+  localStorage.removeItem('ff_token');sessionStorage.removeItem('ff_token');
+  // Reset all data to demo state
+  demoTransactions=[...defaultTransactions];demoBudgets=[...defaultBudgets];demoGoals=[...defaultGoals];
+  demoLending=[...defaultLending];demoSubscriptions=[...defaultSubscriptions];
+  demoBanks=[...defaultBanks];demoCards=[...defaultCards];demoInvestments=[...defaultInvestments];
+  document.getElementById('appContainer').classList.add('hidden');
+  document.getElementById('loginPage').classList.remove('hidden');
+}
+
+/* ══ DATA SYNC ══ */
+async function loadUserData(){
+  try{
+    const data=await apiFetch('/api/data');
+    if(data.transactions&&data.transactions.length>0){
+      demoTransactions=data.transactions.map(t=>({
+        id:t.id,type:t.type,amount:t.amount,description:t.description,
+        category:t.category,date:t.date,icon:t.icon||getCategoryIcon(t.category),
+        payment:t.payment,bank:t.bank,tags:t.tags,notes:t.notes,recurring:!!t.recurring
+      }));
+    }
+    if(data.budgets&&data.budgets.length>0){
+      demoBudgets=data.budgets.map(b=>({id:b.id,category:b.category,limit:b.limit_amount,spent:b.spent,icon:b.icon||getCategoryIcon(b.category),period:b.period,alert:b.alert}));
+    }
+    if(data.goals&&data.goals.length>0){
+      demoGoals=data.goals.map(g=>({id:g.id,name:g.name,icon:g.icon,target:g.target,saved:g.saved,deadline:g.deadline,monthly:g.monthly,category:g.category,notes:g.notes}));
+    }
+    if(data.investments&&data.investments.length>0){
+      demoInvestments=data.investments.map(i=>({id:i.id,country:i.country,type:i.type,name:i.name,invested:i.amount,currentVal:i.current_value,startDate:i.start_date,platform:i.platform,notes:i.notes}));
+    }
+    if(data.banks&&data.banks.length>0){
+      demoBanks=data.banks.map(b=>({id:b.id,name:b.name,type:b.type,nickname:b.nickname,balance:b.balance,asOf:b.as_of,icon:'🏦'}));
+    }
+    if(data.cards&&data.cards.length>0){
+      demoCards=data.cards.map(c=>({id:c.id,type:c.type,network:c.network,bank:c.bank,nickname:c.nickname,last4:c.last4,expiry:c.expiry,limit:c.card_limit,outstanding:c.outstanding,statementDay:c.statement_day,dueDay:c.due_day,minPay:c.min_pay,icon:'💳'}));
+    }
+    if(data.subscriptions&&data.subscriptions.length>0){
+      demoSubscriptions=data.subscriptions.map(s=>({id:s.id,service:s.service,category:s.category,amount:s.amount,cycle:s.cycle,startDate:s.start_date,nextRenewal:s.next_renewal,icon:s.icon||getCategoryIcon(s.category),payment:s.payment,autoRenew:!!s.auto_renew}));
+    }
+    if(data.lending&&data.lending.length>0){
+      demoLending=data.lending.map(l=>({id:l.id,type:l.type,person:l.person,amount:l.amount,interest:l.interest,mode:l.mode,startDate:l.start_date,returnDate:l.return_date,status:l.status}));
+    }
+    // Load user settings
+    const settings=currentUser?.settings||{};
+    if(settings.weatherCity){_weatherCity=settings.weatherCity;const el=document.getElementById('weatherCityInput');if(el)el.value=settings.weatherCity;}
+  }catch(e){console.warn('Data sync failed, using local data:',e);}
+}
+
+/* ── Wired API save helpers ── */
+async function apiSaveTransaction(tx){
+  try{
+    const body={type:tx.type,amount:tx.amount,description:tx.description,category:tx.category,date:tx.date,icon:tx.icon,payment:tx.payment,bank:tx.bank,tags:tx.tags,notes:tx.notes,recurring:tx.recurring};
+    if(tx.id&&typeof tx.id==='number'&&tx.id<1e13){
+      await apiPut(`/api/transactions/${tx.id}`,body);
+    }else{
+      const r=await apiPost('/api/transactions',body);
+      tx.id=r.id;
+    }
+  }catch(e){console.warn('TX save error:',e);}
+}
+async function apiDeleteTransaction(id){
+  if(id&&typeof id==='number'&&id<1e13)await apiDel(`/api/transactions/${id}`).catch(()=>{});
+}
+async function apiSaveBudget(b){
+  try{
+    const body={category:b.category,limit_amount:b.limit,spent:b.spent,icon:b.icon,period:b.period,alert:b.alert};
+    if(b.id&&typeof b.id==='number'&&b.id<1e13){await apiPut(`/api/budgets/${b.id}`,body);}
+    else{const r=await apiPost('/api/budgets',body);b.id=r.id;}
+  }catch(e){console.warn('Budget save error:',e);}
+}
+async function apiDeleteBudget(id){if(id&&typeof id==='number'&&id<1e13)await apiDel(`/api/budgets/${id}`).catch(()=>{});}
+async function apiSaveGoal(g){
+  try{
+    const body={name:g.name,icon:g.icon,target:g.target,saved:g.saved,deadline:g.deadline,monthly:g.monthly,category:g.category,notes:g.notes};
+    if(g.id&&typeof g.id==='number'&&g.id<1e13){await apiPut(`/api/goals/${g.id}`,body);}
+    else{const r=await apiPost('/api/goals',body);g.id=r.id;}
+  }catch(e){console.warn('Goal save error:',e);}
+}
+async function apiDeleteGoal(id){if(id&&typeof id==='number'&&id<1e13)await apiDel(`/api/goals/${id}`).catch(()=>{});}
+async function apiSaveInvestment(inv){
+  try{
+    const body={country:inv.country,type:inv.type,name:inv.name,amount:inv.invested,current_value:inv.currentVal,platform:inv.platform,start_date:inv.startDate,notes:inv.notes};
+    if(inv.id&&typeof inv.id==='number'&&inv.id<1e13){await apiPut(`/api/investments/${inv.id}`,body);}
+    else{const r=await apiPost('/api/investments',body);inv.id=r.id;}
+  }catch(e){console.warn('Invest save error:',e);}
+}
+async function apiDeleteInvestment(id){if(id&&typeof id==='number'&&id<1e13)await apiDel(`/api/investments/${id}`).catch(()=>{});}
+async function apiSaveBank(b){
+  try{
+    const body={name:b.name,nickname:b.nickname,type:b.type,balance:b.balance,as_of:b.asOf||''};
+    if(b.id&&typeof b.id==='number'&&b.id<1e13){await apiPut(`/api/banks/${b.id}`,body);}
+    else{const r=await apiPost('/api/banks',body);b.id=r.id;}
+  }catch(e){console.warn('Bank save error:',e);}
+}
+async function apiDeleteBank(id){if(id&&typeof id==='number'&&id<1e13)await apiDel(`/api/banks/${id}`).catch(()=>{});}
+async function apiSaveCard(c){
+  try{
+    const body={type:c.type,network:c.network,bank:c.bank,nickname:c.nickname,last4:c.last4,expiry:c.expiry,card_limit:c.limit||0,outstanding:c.outstanding||0,statement_day:c.statementDay||1,due_day:c.dueDay||20,min_pay:c.minPay||0};
+    if(c.id&&typeof c.id==='number'&&c.id<1e13){await apiPut(`/api/cards/${c.id}`,body);}
+    else{const r=await apiPost('/api/cards',body);c.id=r.id;}
+  }catch(e){console.warn('Card save error:',e);}
+}
+async function apiDeleteCard(id){if(id&&typeof id==='number'&&id<1e13)await apiDel(`/api/cards/${id}`).catch(()=>{});}
+async function apiSaveSubscription(s){
+  try{
+    const body={service:s.service,category:s.category,amount:s.amount,cycle:s.cycle,start_date:s.startDate||'',next_renewal:s.nextRenewal||'',icon:s.icon||'📱',payment:s.payment,auto_renew:s.autoRenew};
+    if(s.id&&typeof s.id==='number'&&s.id<1e13){await apiPut(`/api/subscriptions/${s.id}`,body);}
+    else{const r=await apiPost('/api/subscriptions',body);s.id=r.id;}
+  }catch(e){console.warn('Sub save error:',e);}
+}
+async function apiDeleteSubscription(id){if(id&&typeof id==='number'&&id<1e13)await apiDel(`/api/subscriptions/${id}`).catch(()=>{});}
+async function apiSaveLending(l){
+  try{
+    const body={type:l.type,person:l.person,amount:l.amount,interest:l.interest||0,mode:l.mode,start_date:l.startDate||'',return_date:l.returnDate||'',status:l.status||'pending',notes:l.notes||''};
+    if(l.id&&typeof l.id==='number'&&l.id<1e13){await apiPut(`/api/lending/${l.id}`,body);}
+    else{const r=await apiPost('/api/lending',body);l.id=r.id;}
+  }catch(e){console.warn('Lending save error:',e);}
+}
+async function apiDeleteLending(id){if(id&&typeof id==='number'&&id<1e13)await apiDel(`/api/lending/${id}`).catch(()=>{});}
+
+/* ══ ONBOARDING ══ */
+let _obStep=0,_obMode='quick';
+function selectObOption(mode){
+  _obMode=mode;
+  document.getElementById('obOptQuick').classList.toggle('selected',mode==='quick');
+  document.getElementById('obOptSetup').classList.toggle('selected',mode==='setup');
+  document.getElementById('obFullSetupExtra').classList.toggle('hidden',mode!=='setup');
+}
+function obNext(){
+  if(_obStep===2)return;
+  document.getElementById(`obPanel${_obStep}`).classList.remove('active');
+  document.getElementById(`obs${_obStep}`).classList.remove('active');
+  document.getElementById(`obs${_obStep}`).classList.add('done');
+  _obStep++;
+  document.getElementById(`obPanel${_obStep}`).classList.add('active');
+  document.getElementById(`obs${_obStep}`).classList.add('active');
+}
+function obBack(){
+  if(_obStep===0)return;
+  document.getElementById(`obPanel${_obStep}`).classList.remove('active');
+  document.getElementById(`obs${_obStep}`).classList.remove('active');
+  _obStep--;
+  document.getElementById(`obPanel${_obStep}`).classList.add('active');
+  document.getElementById(`obs${_obStep}`).classList.add('active');
+}
+async function finishOnboarding(){
+  const btn=document.getElementById('obFinishBtn');
+  btn.innerHTML='<span class="sync-spinner"></span>Setting up…';btn.disabled=true;
+  const name=(document.getElementById('obName')?.value||'').trim()||currentUser?.name||'';
+  const city=(document.getElementById('obCity')?.value||'').trim();
+  const income=parseFloat(document.getElementById('obIncome')?.value||0)||0;
+  // Save profile + settings
+  const settings={weatherCity:city};
+  if(income)settings.monthlyIncome=income;
+  try{await apiPut('/api/user',{name,settings});}catch{}
+  if(city){_weatherCity=city;}
+  // If full setup + goal selected
+  if(_obMode==='setup'){
+    const goalType=document.getElementById('obGoalType')?.value;
+    const goalAmt=parseFloat(document.getElementById('obGoalAmount')?.value||0)||0;
+    if(goalType&&goalAmt){
+      const newGoal={id:Date.now(),name:goalType,icon:'🎯',target:goalAmt,saved:0,deadline:'',monthly:Math.round(goalAmt/24),category:goalType,notes:''};
+      demoGoals.unshift(newGoal);
+      await apiSaveGoal(newGoal);
+    }
+    // Add income transaction if provided
+    if(income){
+      const incTx={id:Date.now(),type:'income',amount:income,description:'Monthly Salary',category:'Salary',date:new Date().toISOString().split('T')[0],icon:'💼',payment:'Bank Transfer',bank:'',tags:'work',notes:'Set up during onboarding',recurring:true};
+      demoTransactions.unshift(incTx);
+      await apiSaveTransaction(incTx);
+    }
+  }
+  document.getElementById('onboardingPage').classList.add('hidden');
+  currentUser={...currentUser,name};
+  launchApp();
+}
+
+/* ══ APP LAUNCH ══ */
+function launchApp(){
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('onboardingPage').classList.add('hidden');
+  document.getElementById('appContainer').classList.remove('hidden');
+  updateGreeting();fetchWeather();renderDashboard();renderBottomNav();updateNotifBadge();
+  // Populate weather city in settings
+  const wci=document.getElementById('weatherCityInput');if(wci&&_weatherCity)wci.value=_weatherCity;
+}
+
 /* ══ INIT ══ */
-document.addEventListener('DOMContentLoaded',()=>{
+// Store defaults for sign-out reset
+const defaultTransactions=[...demoTransactions],defaultBudgets=[...demoBudgets],defaultGoals=[...demoGoals];
+const defaultLending=[...demoLending],defaultSubscriptions=[...demoSubscriptions];
+const defaultBanks=[...demoBanks],defaultCards=[...demoCards],defaultInvestments=[...demoInvestments];
+
+document.addEventListener('DOMContentLoaded',async()=>{
   const today=new Date().toISOString().split('T')[0];
   ['transactionDate','lendingStartDate','subscriptionStartDate','investStartDate'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=today;});
-  document.getElementById('loginForm').addEventListener('submit',e=>{
-    e.preventDefault();
-    document.getElementById('loginPage').classList.add('hidden');
-    document.getElementById('appContainer').classList.remove('hidden');
-    updateGreeting();fetchWeather();renderDashboard();renderBottomNav();updateNotifBadge();
-  });
   setupNavigation();setupPillToggles();setupFormHandlers();setupPinPad();
+
+  // Check for existing session
+  if(_authToken){
+    try{
+      currentUser=await apiFetch('/api/user');
+      await loadUserData();
+      launchApp();
+      return;
+    }catch{
+      _authToken='';localStorage.removeItem('ff_token');sessionStorage.removeItem('ff_token');
+    }
+  }
+  // No session — show login
+  document.getElementById('loginPage').classList.remove('hidden');
+  // Allow Enter key to trigger sign in
+  ['loginEmail','loginPassword'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('keydown',e=>{if(e.key==='Enter')doSignIn();});
+  });
+  ['regName','regEmail','regPassword'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
+  });
 });
 </script>
 </body>
