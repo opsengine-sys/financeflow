@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""FinanceFlow Backend Server — Flask + SQLite + JWT"""
+"""FinanceFlow Backend Server — Flask + SQLite + JWT + Clerk"""
 
 from flask import Flask, request, jsonify, send_file, g
 from flask_cors import CORS
@@ -10,9 +10,71 @@ from functools import wraps
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app, supports_credentials=True)
 
-SECRET  = os.environ.get('JWT_SECRET', 'ff_jwt_secret_2026_change_in_prod')
-DB_PATH = 'financeflow.db'
-MKT_HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+SECRET        = os.environ.get('JWT_SECRET', 'ff_jwt_secret_2026_change_in_prod')
+CLERK_PUB_KEY = os.environ.get('CLERK_PUBLISHABLE_KEY', '')
+CLERK_SECRET  = os.environ.get('CLERK_SECRET_KEY', '')
+DB_PATH       = 'financeflow.db'
+MKT_HEADERS   = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+
+# ─── Clerk Token Verification ─────────────────────────────────────────────────
+
+_clerk_jwks_cache = {'keys': None, 'fetched': 0}
+
+def _get_clerk_jwks():
+    """Fetch Clerk JWKS (cached for 5 min)."""
+    import time
+    now = time.time()
+    if _clerk_jwks_cache['keys'] and now - _clerk_jwks_cache['fetched'] < 300:
+        return _clerk_jwks_cache['keys']
+    if not CLERK_SECRET:
+        return None
+    # Derive the JWKS URL from the publishable key (pk_live_xxx or pk_test_xxx)
+    # Clerk instance domain is embedded in the publishable key
+    try:
+        # Clerk JWKS endpoint uses the secret key to get the instance
+        # We'll call the Clerk backend API to get the JWKS URL
+        r = requests.get(
+            'https://api.clerk.com/v1/jwks',
+            headers={'Authorization': f'Bearer {CLERK_SECRET}'},
+            timeout=5
+        )
+        if r.ok:
+            _clerk_jwks_cache['keys'] = r.json().get('keys', [])
+            _clerk_jwks_cache['fetched'] = now
+            return _clerk_jwks_cache['keys']
+    except Exception:
+        pass
+    return None
+
+def verify_clerk_token(session_token):
+    """Verify a Clerk session JWT and return (clerk_user_id, email, name) or raise."""
+    from jwt.algorithms import RSAAlgorithm
+    import base64, json as _json
+
+    # Decode header to get kid
+    parts = session_token.split('.')
+    if len(parts) != 3:
+        raise ValueError('Invalid token format')
+    header = _json.loads(base64.urlsafe_b64decode(parts[0] + '=='))
+    kid = header.get('kid')
+
+    keys = _get_clerk_jwks()
+    if not keys:
+        raise ValueError('Could not fetch Clerk JWKS')
+
+    # Find matching key
+    jwk = next((k for k in keys if k.get('kid') == kid), None)
+    if not jwk:
+        raise ValueError('No matching signing key found')
+
+    public_key = RSAAlgorithm.from_jwk(json.dumps(jwk))
+    payload = jwt.decode(
+        session_token,
+        public_key,
+        algorithms=['RS256'],
+        options={'verify_aud': False}
+    )
+    return payload  # contains 'sub' (clerk user id)
 
 # ─── Database ────────────────────────────────────────────────────────────────
 
@@ -33,13 +95,14 @@ def init_db():
     db = sqlite3.connect(DB_PATH)
     db.executescript("""
     CREATE TABLE IF NOT EXISTS users (
-        id           TEXT PRIMARY KEY,
-        email        TEXT UNIQUE NOT NULL,
-        name         TEXT NOT NULL,
-        password_hash TEXT NOT NULL,
-        avatar       TEXT DEFAULT '',
-        settings     TEXT DEFAULT '{}',
-        created_at   TEXT DEFAULT CURRENT_TIMESTAMP
+        id            TEXT PRIMARY KEY,
+        email         TEXT UNIQUE NOT NULL,
+        name          TEXT NOT NULL,
+        password_hash TEXT NOT NULL DEFAULT '',
+        avatar        TEXT DEFAULT '',
+        clerk_id      TEXT DEFAULT '',
+        settings      TEXT DEFAULT '{}',
+        created_at    TEXT DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS transactions (
         id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -184,6 +247,73 @@ def token_required(f):
 
 def rows_to_list(db, sql, params=[]):
     return [dict(r) for r in db.execute(sql, params).fetchall()]
+
+# ─── Clerk SSO Route ──────────────────────────────────────────────────────────
+
+@app.route('/api/auth/clerk', methods=['POST'])
+def clerk_auth():
+    """Exchange a Clerk session token for a FinanceFlow JWT."""
+    d = request.json or {}
+    session_token = d.get('sessionToken', '')
+    # Clerk also sends user info directly from the frontend SDK
+    clerk_user_id = d.get('clerkUserId', '')
+    email         = (d.get('email') or '').strip().lower()
+    name          = (d.get('name') or 'User').strip()
+    avatar        = d.get('avatar', '')
+
+    if not clerk_user_id or not email:
+        return jsonify({'error': 'Missing Clerk user data'}), 400
+
+    # Verify the session token if secret key is configured
+    if CLERK_SECRET and session_token:
+        try:
+            payload = verify_clerk_token(session_token)
+            # Ensure the token's subject matches the declared user id
+            if payload.get('sub') != clerk_user_id:
+                return jsonify({'error': 'Token subject mismatch'}), 401
+        except Exception as e:
+            return jsonify({'error': f'Clerk token verification failed: {e}'}), 401
+
+    db = get_db()
+
+    # Check if we already have a user with this Clerk ID or email
+    user = db.execute('SELECT * FROM users WHERE clerk_id=?', [clerk_user_id]).fetchone()
+    is_new = False
+
+    if not user:
+        # Try to match by email (e.g. existing email/password user now using SSO)
+        user = db.execute('SELECT * FROM users WHERE email=?', [email]).fetchone()
+        if user:
+            # Link Clerk ID to existing account
+            db.execute('UPDATE users SET clerk_id=?, avatar=? WHERE id=?',
+                       [clerk_user_id, avatar or user['avatar'], user['id']])
+            db.commit()
+            user = db.execute('SELECT * FROM users WHERE id=?', [user['id']]).fetchone()
+        else:
+            # Brand new user via Clerk
+            user_id = str(uuid.uuid4())
+            db.execute(
+                'INSERT INTO users (id, email, name, password_hash, avatar, clerk_id) VALUES (?,?,?,?,?,?)',
+                [user_id, email, name, '', avatar, clerk_user_id]
+            )
+            db.commit()
+            user = db.execute('SELECT * FROM users WHERE id=?', [user_id]).fetchone()
+            is_new = True
+
+    token    = make_token(user['id'])
+    settings = json.loads(user['settings'] or '{}')
+    return jsonify({
+        'token': token,
+        'user': {
+            'id': user['id'], 'name': user['name'], 'email': user['email'],
+            'avatar': user['avatar'], 'settings': settings, 'is_new': is_new
+        }
+    })
+
+@app.route('/api/auth/clerk-config', methods=['GET'])
+def clerk_config():
+    """Return the Clerk publishable key so the frontend can load ClerkJS."""
+    return jsonify({'publishableKey': CLERK_PUB_KEY})
 
 # ─── Auth Routes ──────────────────────────────────────────────────────────────
 
