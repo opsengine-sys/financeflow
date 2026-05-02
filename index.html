@@ -371,14 +371,60 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
 .drop-zone-icon{font-size:2.5rem;margin-bottom:.75rem;opacity:.5}
 .drop-zone-text{font-size:.9rem;font-weight:500;color:var(--text-2)}
 .drop-zone-sub{font-size:.8rem;color:var(--text-3);margin-top:.25rem}
+/* Transaction card modernized */
+.transaction-item{position:relative}
+.transaction-item::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:2px;background:var(--border);transition:all .2s}
+.transaction-item.income-tx::before{background:var(--success)}
+.transaction-item.expense-tx::before{background:var(--danger)}
+.tx-hover-card{position:absolute;left:calc(100% + 8px);top:50%;transform:translateY(-50%);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:.875rem 1.125rem;box-shadow:var(--shadow-lg);z-index:50;min-width:210px;pointer-events:none;opacity:0;transition:opacity .18s ease,transform .18s ease;transform:translateY(-50%) scale(.96);white-space:nowrap}
+.tx-hover-card.show{opacity:1;transform:translateY(-50%) scale(1)}
+.tx-hover-card .thr{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);font-weight:700;margin-bottom:.125rem}
+.tx-hover-card .thv{font-size:.875rem;font-weight:600;color:var(--text);margin-bottom:.5rem}
+.tx-hover-card .th-chip{display:inline-flex;align-items:center;gap:.25rem;font-size:.72rem;padding:.2rem .5rem;border-radius:var(--radius-full);font-weight:600;margin-right:.25rem}
+/* Filter bar */
+.tx-filter-bar{display:flex;gap:.625rem;flex-wrap:wrap;align-items:center;padding:.875rem 1.25rem;background:var(--bg-alt);border-radius:var(--radius-lg);margin-bottom:1rem;border:1px solid var(--border-light);position:sticky;top:calc(var(--topbar-h) + .5rem);z-index:10}
+.tx-filter-search{flex:1;min-width:180px;position:relative}
+.tx-filter-search input{width:100%;padding:.55rem .875rem .55rem 2.25rem;border:1.5px solid var(--border);border-radius:var(--radius-md);font-family:'DM Sans',sans-serif;font-size:.875rem;background:var(--surface);color:var(--text);transition:all .15s}
+.tx-filter-search input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(4,120,87,.1)}
+.tx-filter-search .search-icon{position:absolute;left:.625rem;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:.9rem;pointer-events:none}
+.tx-type-pills{display:flex;gap:.25rem}
+.tx-type-pill{padding:.45rem .875rem;border-radius:var(--radius-full);border:1.5px solid var(--border);background:var(--surface);font-size:.8rem;font-weight:600;color:var(--text-2);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.tx-type-pill.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.tx-type-pill.income-pill.active{background:var(--success);border-color:var(--success)}
+.tx-type-pill.expense-pill.active{background:var(--danger);border-color:var(--danger)}
+.tx-filter-select{padding:.5rem .875rem;border:1.5px solid var(--border);border-radius:var(--radius-md);font-size:.82rem;font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .5rem center;padding-right:2rem;transition:all .15s}
+.tx-filter-select:focus{outline:none;border-color:var(--primary)}
+.tx-clear-btn{padding:.45rem .75rem;border-radius:var(--radius-md);background:transparent;border:1.5px solid var(--border);color:var(--text-3);font-size:.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap}
+.tx-clear-btn:hover{border-color:var(--danger);color:var(--danger)}
+.tx-count-badge{font-size:.78rem;color:var(--text-3);white-space:nowrap;padding:.25rem 0}
+/* Modern selects + date pickers */
+.form-select,.form-input[type="date"],.form-input[type="month"]{transition:border-color .2s,box-shadow .2s,background .2s}
+.form-select:hover,.form-input[type="date"]:hover{border-color:color-mix(in srgb,var(--primary) 50%,var(--border))}
+.form-input[type="date"]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234B5563' stroke-width='2'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .75rem center;padding-right:2.5rem}
+body.dark-mode .form-input[type="date"]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E")}
+select option{background:var(--surface);color:var(--text)}
+/* Market ticker selection */
+.ticker-toggle-wrap{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.5rem}
+.ticker-toggle-btn{display:flex;align-items:center;gap:.375rem;padding:.5rem .875rem;border-radius:var(--radius-full);border:1.5px solid var(--border);background:var(--bg-alt);font-size:.8rem;font-weight:600;color:var(--text-2);cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.ticker-toggle-btn.active{border-color:var(--primary);background:rgba(4,120,87,.08);color:var(--primary)}
+.ticker-toggle-btn .tick-flag{font-size:.9rem}
+/* CSV template cards */
+.template-card{display:flex;align-items:center;gap:.875rem;padding:.875rem 1rem;border-radius:var(--radius-md);border:1.5px solid var(--border);background:var(--bg-alt);cursor:pointer;transition:all .15s;margin-bottom:.5rem}
+.template-card:hover{border-color:var(--primary);background:rgba(4,120,87,.04);transform:translateX(3px)}
+.template-card-icon{font-size:1.5rem;flex-shrink:0;width:40px;text-align:center}
+.template-card-info{flex:1}
+.template-card-name{font-weight:600;color:var(--text);font-size:.9rem}
+.template-card-desc{font-size:.78rem;color:var(--text-2);margin-top:.1rem}
+.template-card-dl{font-size:.8rem;color:var(--primary);font-weight:600;white-space:nowrap}
 /* Responsive */
 @media(max-width:1024px){
-  .sidebar{transform:translateX(-100%)}
+  .sidebar{transform:translateX(-100%);padding-top:calc(var(--topbar-h) + 1rem)}
   .sidebar.mobile-visible{transform:translateX(0)}
   .main-content{margin-left:0;padding-top:calc(var(--topbar-h) + 1.25rem)}
   .bottom-nav{display:block}
   .main-content{padding-bottom:6rem}
   .mobile-topbar{display:flex}
+  .tx-hover-card{display:none}
 }
 @media(max-width:768px){
   .header-title{font-size:1.5rem}
@@ -387,7 +433,7 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
   .two-col{grid-template-columns:1fr}
   .modal-body,.modal-header{padding-left:1.25rem;padding-right:1.25rem}
   .main-content{padding:calc(var(--topbar-h) + 1.25rem) 1rem 6rem}
-  .modal{border-radius:var(--radius-xl) var(--radius-xl) 0 0;margin-top:auto;max-height:88vh}
+  .modal{border-radius:var(--radius-xl) var(--radius-xl) var(--radius-md) var(--radius-md);margin-top:auto;max-height:88vh}
   .modal-overlay{align-items:flex-end}
   .login-card{padding:1.75rem}
   .bank-update-fields{flex-direction:column;gap:.5rem}
@@ -396,10 +442,12 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
   .greeting-name{font-size:1.25rem}
   .weather-widget{min-width:130px}
   .market-pulse{grid-template-columns:repeat(3,1fr)}
+  .tx-filter-bar{top:calc(var(--topbar-h) + .25rem)}
 }
 @media(max-width:480px){
   .stats-grid{grid-template-columns:1fr}
   .market-pulse{grid-template-columns:repeat(2,1fr)}
+  .tx-filter-bar{gap:.375rem}
 }
 .hidden{display:none!important}
 </style>
@@ -534,6 +582,28 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
           <button class="btn btn-primary" onclick="showAddTransactionModal()">+ Add Transaction</button>
         </div>
       </div>
+      <div class="tx-filter-bar">
+        <div class="tx-filter-search">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="txSearchInput" placeholder="Search transactions…" oninput="applyTxFilters()">
+        </div>
+        <div class="tx-type-pills">
+          <button class="tx-type-pill active" data-filter="all" onclick="setTxTypeFilter(this)">All</button>
+          <button class="tx-type-pill income-pill" data-filter="income" onclick="setTxTypeFilter(this)">↑ Income</button>
+          <button class="tx-type-pill expense-pill" data-filter="expense" onclick="setTxTypeFilter(this)">↓ Expense</button>
+        </div>
+        <select class="tx-filter-select" id="txCategoryFilter" onchange="applyTxFilters()">
+          <option value="">All Categories</option>
+        </select>
+        <select class="tx-filter-select" id="txSortFilter" onchange="applyTxFilters()">
+          <option value="date-desc">Newest First</option>
+          <option value="date-asc">Oldest First</option>
+          <option value="amount-desc">Highest Amount</option>
+          <option value="amount-asc">Lowest Amount</option>
+        </select>
+        <button class="tx-clear-btn" onclick="clearTxFilters()">✕ Clear</button>
+        <span class="tx-count-badge" id="txCountBadge"></span>
+      </div>
       <div class="card"><div id="allTransactions"></div></div>
     </div>
 
@@ -602,7 +672,10 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
       <div class="card" style="margin-bottom:.875rem;">
         <div class="card-header">
           <h2 class="card-title"><span class="market-live-dot"></span>Market Pulse</h2>
-          <button class="btn btn-ghost btn-sm" onclick="fetchMarketData()" id="refreshMktBtn">↻ Refresh</button>
+          <div style="display:flex;gap:.375rem;align-items:center;">
+            <button class="btn btn-ghost btn-sm" onclick="openTickerSelectModal()" title="Customize tickers">⚙ Tickers</button>
+            <button class="btn btn-ghost btn-sm" onclick="fetchMarketData()" id="refreshMktBtn">↻ Refresh</button>
+          </div>
         </div>
         <div class="market-pulse" id="marketPulse">
           <div style="grid-column:1/-1;text-align:center;padding:.5rem;font-size:.85rem;color:var(--text-2);">Loading market data…</div>
@@ -629,10 +702,25 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
         <button class="btn btn-primary" onclick="generateReport()">📊 Generate Report</button>
       </div>
       <div class="card">
-        <h3 class="card-title" style="margin-bottom:1.25rem;">Import / Export</h3>
-        <div style="display:grid;gap:.75rem;">
+        <h3 class="card-title" style="margin-bottom:.375rem;">CSV Templates</h3>
+        <p style="font-size:.82rem;color:var(--text-2);margin-bottom:1rem;">Download pre-filled templates with valid categories, bank names, and payment methods.</p>
+        <div class="template-card" onclick="downloadCSVTemplate('transactions')">
+          <div class="template-card-icon">💳</div>
+          <div class="template-card-info"><div class="template-card-name">Transactions Template</div><div class="template-card-desc">Date, Type, Description, Category, Amount, Payment Method, Bank</div></div>
+          <span class="template-card-dl">↓ CSV</span>
+        </div>
+        <div class="template-card" onclick="downloadCSVTemplate('investments')">
+          <div class="template-card-icon">📈</div>
+          <div class="template-card-info"><div class="template-card-name">Investments Template</div><div class="template-card-desc">Country, Type, Name, Invested, Current Value, Platform, Start Date</div></div>
+          <span class="template-card-dl">↓ CSV</span>
+        </div>
+        <div class="template-card" onclick="downloadCSVTemplate('goals')">
+          <div class="template-card-icon">🏆</div>
+          <div class="template-card-info"><div class="template-card-name">Goals Template</div><div class="template-card-desc">Name, Icon, Target, Saved, Deadline, Monthly Contribution, Category</div></div>
+          <span class="template-card-dl">↓ CSV</span>
+        </div>
+        <div style="display:grid;gap:.75rem;margin-top:1rem;border-top:1px solid var(--border-light);padding-top:1rem;">
           <button class="btn btn-secondary" style="justify-content:center;" onclick="openImportCSVModal()">⬆ Import Transactions from CSV</button>
-          <button class="btn btn-secondary" style="justify-content:center;" onclick="downloadCSVTemplate()">📋 Download CSV Template</button>
           <button class="btn btn-secondary" style="justify-content:center;" onclick="exportAsCSV()">📄 Export Transactions as CSV</button>
           <button class="btn btn-secondary" style="justify-content:center;" onclick="exportAsJSON()">💾 JSON Backup</button>
         </div>
@@ -657,7 +745,7 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
         <div class="settings-section">
           <h3 class="settings-section-title">Data</h3>
           <div class="settings-item" onclick="openImportCSVModal()"><div class="settings-item-info"><div class="settings-item-title">Import Transactions</div><div class="settings-item-description">Upload a CSV file to bulk import</div></div><span class="settings-chevron">›</span></div>
-          <div class="settings-item" onclick="downloadCSVTemplate()"><div class="settings-item-info"><div class="settings-item-title">Download CSV Template</div><div class="settings-item-description">Get the import template</div></div><span class="settings-chevron">›</span></div>
+          <div class="settings-item" onclick="navigateTo('reports')"><div class="settings-item-info"><div class="settings-item-title">Download CSV Templates</div><div class="settings-item-description">Transactions, Investments &amp; Goals templates</div></div><span class="settings-chevron">›</span></div>
         </div>
         <div class="settings-section">
           <h3 class="settings-section-title">Categories &amp; Tags</h3>
@@ -893,7 +981,7 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
     <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleCSVUpload(this)">
     <div id="csvPreview" style="margin-top:1rem;"></div>
     <div style="display:flex;gap:.75rem;margin-top:.75rem;justify-content:flex-end;">
-      <button class="btn btn-secondary" onclick="downloadCSVTemplate()">📋 Download Template</button>
+      <button class="btn btn-secondary" onclick="downloadCSVTemplate('transactions')">📋 Download Transactions Template</button>
       <button class="btn btn-primary" id="importCSVBtn" style="display:none;" onclick="confirmCSVImport()">Import Transactions</button>
     </div>
   </div></div>
@@ -956,6 +1044,16 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
 <!-- Notifications -->
 <div id="notificationsModal" class="modal-overlay">
   <div class="modal"><div class="modal-header"><h2 class="modal-title">🔔 Alerts &amp; Reminders</h2><button class="modal-close" onclick="closeModal('notificationsModal')">×</button></div><div class="modal-body" id="notificationsBody"></div></div>
+</div>
+
+<!-- Ticker Select Modal -->
+<div id="tickerSelectModal" class="modal-overlay">
+  <div class="modal"><div class="modal-header"><h2 class="modal-title">⚙ Customize Market Tickers</h2><button class="modal-close" onclick="closeModal('tickerSelectModal')">×</button></div>
+  <div class="modal-body">
+    <p style="font-size:.85rem;color:var(--text-2);margin-bottom:1.25rem;">Select which tickers to show in the Market Pulse widget.</p>
+    <div class="ticker-toggle-wrap" id="tickerToggleList"></div>
+  </div>
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeModal('tickerSelectModal')">Cancel</button><button class="btn btn-primary btn-sm" onclick="saveTickerSelection()">Save</button></div></div>
 </div>
 
 <!-- Nav Customize with drag-drop -->
@@ -1087,28 +1185,36 @@ async function fetchWeather(){
 
 /* ══ MARKET PULSE ══ */
 const marketItems=[
-  {id:'nifty50',  label:'Nifty 50',   price:24526.50, chg:0.82,  type:'index', flag:'🇮🇳'},
-  {id:'sensex',   label:'Sensex',     price:80432.10, chg:0.75,  type:'index', flag:'🇮🇳'},
-  {id:'niftybank',label:'Nifty Bank', price:51820.60, chg:-0.32, type:'index', flag:'🇮🇳'},
-  {id:'sp500',    label:'S&P 500',    price:5127.79,  chg:0.51,  type:'index', flag:'🇺🇸'},
-  {id:'nasdaq',   label:'NASDAQ',     price:15927.40, chg:0.89,  type:'index', flag:'🇺🇸'},
+  {id:'nifty50',  label:'Nifty 50',   price:24526.50, chg:0.82,  type:'index',    flag:'🇮🇳'},
+  {id:'sensex',   label:'Sensex',     price:80432.10, chg:0.75,  type:'index',    flag:'🇮🇳'},
+  {id:'niftybank',label:'Nifty Bank', price:51820.60, chg:-0.32, type:'index',    flag:'🇮🇳'},
+  {id:'sp500',    label:'S&P 500',    price:5127.79,  chg:0.51,  type:'index',    flag:'🇺🇸'},
+  {id:'nasdaq',   label:'NASDAQ',     price:15927.40, chg:0.89,  type:'index',    flag:'🇺🇸'},
+  {id:'dowjones', label:'Dow Jones',  price:39127.50, chg:0.32,  type:'index',    flag:'🇺🇸'},
   {id:'gold',     label:'Gold $/oz',  price:2346.40,  chg:0.23,  type:'commodity',flag:'🥇'},
-  {id:'bitcoin',  label:'Bitcoin',    price:null,     chg:null,  type:'crypto'},
-  {id:'ethereum', label:'Ethereum',   price:null,     chg:null,  type:'crypto'}
+  {id:'silver',   label:'Silver',     price:29.85,    chg:-0.18, type:'commodity',flag:'🥈'},
+  {id:'crude',    label:'Crude Oil',  price:82.40,    chg:0.55,  type:'commodity',flag:'🛢️'},
+  {id:'bitcoin',  label:'Bitcoin',    price:null,     chg:null,  type:'crypto',   flag:'₿'},
+  {id:'ethereum', label:'Ethereum',   price:null,     chg:null,  type:'crypto',   flag:'Ξ'}
 ];
+let selectedTickers=new Set(['nifty50','sensex','sp500','nasdaq','gold','bitcoin','ethereum']);
+let _pendingTickers=null;
 function renderMarketPulse(cryptoData){
-  const items=marketItems.map(m=>{
+  const visible=marketItems.filter(m=>selectedTickers.has(m.id));
+  const items=visible.map(m=>{
     if(m.type==='crypto'&&cryptoData){
       const sym=m.id==='bitcoin'?'bitcoin':'ethereum';
-      if(cryptoData[sym]){m.price=cryptoData[sym].inr;m.chg=+(Math.random()*4-2).toFixed(2);}
+      if(cryptoData[sym]){m.price=cryptoData[sym].inr;if(m.chg===null)m.chg=+(Math.random()*4-2).toFixed(2);}
     } else if(m.type!=='crypto'){
       m.price=m.price*(1+(Math.random()*.003-.0015));
+      m.chg=+(Math.random()*2-1).toFixed(2);
     }
-    const fmt=m.id==='bitcoin'?`₹${Math.round(m.price/1000)}K`:m.id==='ethereum'?`₹${Math.round(m.price/1000)}K`:m.type==='commodity'?`$${m.price?.toFixed(0)}`:m.type==='index'&&m.flag==='🇺🇸'?m.price?.toFixed(0):m.price?.toLocaleString('en-IN',{maximumFractionDigits:0});
-    const pos=m.chg>=0;
-    return`<div class="market-ticker"><div class="market-ticker-name">${m.flag||''} ${m.label}</div><div class="market-ticker-price">${fmt||'—'}</div><div class="market-ticker-change ${pos?'up':'down'}">${pos?'▲':'▼'} ${Math.abs(m.chg)?.toFixed(2)||'—'}%</div></div>`;
+    const isInr=m.type==='crypto'||(m.type==='index'&&m.flag==='🇮🇳');
+    const fmt=m.id==='bitcoin'||m.id==='ethereum'?`₹${Math.round((m.price||0)/1000)}K`:isInr?m.price?.toLocaleString('en-IN',{maximumFractionDigits:0}):`$${m.price?.toFixed(m.type==='commodity'&&m.id==='silver'?2:0)||'—'}`;
+    const pos=(m.chg||0)>=0;
+    return`<div class="market-ticker"><div class="market-ticker-name">${m.flag||''} ${m.label}</div><div class="market-ticker-price">${fmt||'—'}</div><div class="market-ticker-change ${pos?'up':'down'}">${pos?'▲':'▼'} ${Math.abs(m.chg||0).toFixed(2)}%</div></div>`;
   }).join('');
-  document.getElementById('marketPulse').innerHTML=items;
+  document.getElementById('marketPulse').innerHTML=items||'<div style="grid-column:1/-1;text-align:center;padding:.5rem;font-size:.85rem;color:var(--text-2);">No tickers selected</div>';
 }
 async function fetchMarketData(){
   document.getElementById('refreshMktBtn').textContent='↻ Loading…';
@@ -1116,6 +1222,24 @@ async function fetchMarketData(){
   try{const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=inr');crypto=await r.json();}catch{}
   renderMarketPulse(crypto);
   document.getElementById('refreshMktBtn').textContent='↻ Refresh';
+}
+function openTickerSelectModal(){
+  _pendingTickers=new Set(selectedTickers);
+  const el=document.getElementById('tickerToggleList');
+  el.innerHTML=marketItems.map(m=>`<button class="ticker-toggle-btn ${_pendingTickers.has(m.id)?'active':''}" data-tid="${m.id}" onclick="toggleTickerBtn(this)">${m.flag||''} ${m.label}</button>`).join('');
+  document.getElementById('tickerSelectModal').classList.add('active');
+}
+function toggleTickerBtn(btn){
+  const id=btn.dataset.tid;
+  if(_pendingTickers.has(id)){_pendingTickers.delete(id);btn.classList.remove('active');}
+  else{_pendingTickers.add(id);btn.classList.add('active');}
+}
+function saveTickerSelection(){
+  if(_pendingTickers.size===0){toast('Select at least one ticker','warning');return;}
+  selectedTickers=new Set(_pendingTickers);
+  closeModal('tickerSelectModal');
+  fetchMarketData();
+  toast(`Showing ${selectedTickers.size} ticker${selectedTickers.size!==1?'s':''}!`);
 }
 
 /* ══ ANIMATED CHARTS ══ */
@@ -1198,10 +1322,57 @@ function renderForecastChart(){
 
 /* ══ RENDER LISTS ══ */
 function renderRecentTransactions(){const el=document.getElementById('recentTransactions');if(el)el.innerHTML=demoTransactions.slice(0,5).map(t=>txHTML(t)).join('');}
-function renderAllTransactions(){const el=document.getElementById('allTransactions');if(!el)return;if(!demoTransactions.length){el.innerHTML=emptyState('💳','No transactions','Add your first transaction');return;}el.innerHTML=demoTransactions.map(t=>txHTML(t,true)).join('');}
+
+let txFilterType='all',txFilterCategory='',txFilterSort='date-desc',txFilterSearch='';
+function populateTxCategoryFilter(){
+  const sel=document.getElementById('txCategoryFilter');if(!sel)return;
+  const cats=[...new Set(demoTransactions.map(t=>t.category))].sort();
+  sel.innerHTML=`<option value="">All Categories</option>`+cats.map(c=>`<option value="${c}"${txFilterCategory===c?' selected':''}>${c}</option>`).join('');
+}
+function setTxTypeFilter(btn){
+  txFilterType=btn.dataset.filter;
+  document.querySelectorAll('.tx-type-pill').forEach(b=>b.classList.toggle('active',b===btn));
+  applyTxFilters();
+}
+function applyTxFilters(){
+  txFilterSearch=document.getElementById('txSearchInput')?.value.toLowerCase()||'';
+  txFilterCategory=document.getElementById('txCategoryFilter')?.value||'';
+  txFilterSort=document.getElementById('txSortFilter')?.value||'date-desc';
+  renderAllTransactions();
+}
+function clearTxFilters(){
+  txFilterType='all';txFilterSearch='';txFilterCategory='';txFilterSort='date-desc';
+  document.getElementById('txSearchInput').value='';
+  document.getElementById('txCategoryFilter').value='';
+  document.getElementById('txSortFilter').value='date-desc';
+  document.querySelectorAll('.tx-type-pill').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));
+  renderAllTransactions();
+}
+function renderAllTransactions(){
+  const el=document.getElementById('allTransactions');if(!el)return;
+  populateTxCategoryFilter();
+  let txs=[...demoTransactions];
+  if(txFilterType!=='all')txs=txs.filter(t=>t.type===txFilterType);
+  if(txFilterCategory)txs=txs.filter(t=>t.category===txFilterCategory);
+  if(txFilterSearch)txs=txs.filter(t=>t.description.toLowerCase().includes(txFilterSearch)||t.category.toLowerCase().includes(txFilterSearch)||t.bank.toLowerCase().includes(txFilterSearch)||(t.tags||'').toLowerCase().includes(txFilterSearch));
+  if(txFilterSort==='date-asc')txs.sort((a,b)=>a.date.localeCompare(b.date));
+  else if(txFilterSort==='amount-desc')txs.sort((a,b)=>b.amount-a.amount);
+  else if(txFilterSort==='amount-asc')txs.sort((a,b)=>a.amount-b.amount);
+  else txs.sort((a,b)=>b.date.localeCompare(a.date));
+  const badge=document.getElementById('txCountBadge');if(badge)badge.textContent=txs.length+' result'+(txs.length!==1?'s':'');
+  if(!txs.length){el.innerHTML=emptyState('🔍','No matching transactions','Try adjusting your filters');return;}
+  el.innerHTML=txs.map(t=>txHTML(t,true)).join('');
+}
 function txHTML(t,showBank=false){
   const bg=t.type==='income'?'rgba(34,197,94,.1)':'rgba(239,68,68,.1)';const col=t.type==='income'?'var(--success)':'var(--danger)';const pre=t.type==='income'?'+':'-';
-  return`<div class="transaction-item" onclick="showTxDetail(${t.id})"><div class="transaction-icon" style="background:${bg};color:${col}">${t.icon}</div><div class="transaction-info"><div class="transaction-title">${t.description}</div><div class="transaction-meta"><span>${t.category}</span><span class="dot-sep">●</span><span>${formatDateShort(t.date)}</span><span class="dot-sep">●</span><span>${t.payment}</span>${showBank?`<span class="dot-sep">●</span><span>${t.bank}</span>`:''}</div></div><div class="transaction-amount ${t.type}">${pre}₹${t.amount.toLocaleString('en-IN')}</div></div>`;
+  const tagBadges=t.tags?t.tags.split(',').slice(0,2).map(g=>`<span class="th-chip" style="background:rgba(4,120,87,.1);color:var(--primary);">${g.trim()}</span>`).join(''):'';
+  const hoverCard=`<div class="tx-hover-card" id="thc${t.id}">
+    <div class="thr">Amount</div><div class="thv" style="color:${col};font-family:'Sora',sans-serif;">${pre}₹${t.amount.toLocaleString('en-IN')}</div>
+    <div class="thr">Payment</div><div class="thv">${t.payment}${t.bank?` · ${t.bank}`:''}</div>
+    ${t.notes?`<div class="thr">Notes</div><div class="thv" style="font-weight:400;font-size:.82rem;">${t.notes}</div>`:''}
+    ${tagBadges?`<div style="margin-top:.25rem;">${tagBadges}</div>`:''}
+  </div>`;
+  return`<div class="transaction-item ${t.type}-tx" onclick="showTxDetail(${t.id})" onmouseenter="document.getElementById('thc${t.id}')?.classList.add('show')" onmouseleave="document.getElementById('thc${t.id}')?.classList.remove('show')"><div class="transaction-icon" style="background:${bg};color:${col}">${t.icon}</div><div class="transaction-info"><div class="transaction-title">${t.description}</div><div class="transaction-meta"><span>${t.category}</span><span class="dot-sep">●</span><span>${formatDateShort(t.date)}</span><span class="dot-sep">●</span><span>${t.payment}</span>${showBank&&t.bank?`<span class="dot-sep">●</span><span>${t.bank}</span>`:''}</div></div><div class="transaction-amount ${t.type}">${pre}₹${t.amount.toLocaleString('en-IN')}</div>${hoverCard}</div>`;
 }
 function showTxDetail(id){
   const t=demoTransactions.find(x=>x.id===id);if(!t)return;
@@ -1473,23 +1644,54 @@ document.addEventListener('DOMContentLoaded',()=>{
 /* ══ CSV IMPORT ══ */
 function openImportCSVModal(){pendingCSVRows=[];document.getElementById('csvPreview').innerHTML='';document.getElementById('importCSVBtn').style.display='none';document.getElementById('importCSVModal').classList.add('active');}
 function handleCSVUpload(input){if(input.files&&input.files[0])parseCSVFile(input.files[0]);}
+function fuzzyMatchBank(raw){
+  if(!raw)return'';
+  const r=raw.toLowerCase().trim();
+  const knownBanks=[...demoBanks.map(b=>b.name),'HDFC Bank','SBI','ICICI Bank','Axis Bank','Kotak Mahindra','Yes Bank','PNB','Bank of Baroda','Canara Bank','IndusInd Bank','Federal Bank','Cash'];
+  for(const b of knownBanks){if(r.includes(b.toLowerCase())||b.toLowerCase().includes(r))return b;}
+  return raw;
+}
+function fuzzyMatchCategory(raw,type='expense'){
+  if(!raw)return type==='income'?'Other Income':'Other';
+  const r=raw.toLowerCase().trim();
+  const cats=type==='income'?appCategories.income:appCategories.expense;
+  for(const c of cats){if(r.includes(c.toLowerCase())||c.toLowerCase().includes(r))return c;}
+  return raw;
+}
+function fuzzyMatchPayment(raw){
+  if(!raw)return'Cash';
+  const r=raw.toLowerCase().trim();
+  const methods=['UPI','Credit Card','Debit Card','Bank Transfer','Cash','Google Pay','PhonePe','Paytm','Net Banking'];
+  for(const m of methods){if(r.includes(m.toLowerCase())||m.toLowerCase().includes(r))return m;}
+  return raw;
+}
 function parseCSVFile(file){
   const reader=new FileReader();
   reader.onload=e=>{
-    const text=e.target.result;const lines=text.split(/\r?\n/).filter(l=>l.trim());
+    const text=e.target.result;
+    const lines=text.split(/\r?\n/).filter(l=>l.trim()&&!l.trim().startsWith('#'));
     if(lines.length<2){toast('CSV must have at least a header row and one data row.','error');return;}
     const headers=lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/[^a-z ]/g,'').trim());
     const colMap={date:-1,type:-1,description:-1,category:-1,amount:-1,'payment method':-1,bank:-1,tags:-1,notes:-1};
     headers.forEach((h,i)=>{if(colMap.hasOwnProperty(h))colMap[h]=i;});
     if(colMap.date<0||colMap.amount<0||colMap.description<0){toast('CSV missing required columns: Date, Amount, Description','error');return;}
-    pendingCSVRows=[];
-    const rows=[];
+    pendingCSVRows=[];let warnings=0;
     for(let i=1;i<lines.length;i++){if(!lines[i].trim())continue;
       const cols=lines[i].split(',');
-      const row={date:cols[colMap.date]?.trim()||'',type:(cols[colMap.type]?.trim()||'expense').toLowerCase(),description:cols[colMap.description]?.trim()||'',category:cols[colMap.category]?.trim()||'Other',amount:parseFloat(cols[colMap.amount])||0,payment:cols[colMap['payment method']]?.trim()||'Cash',bank:cols[colMap.bank]?.trim()||'',tags:cols[colMap.tags]?.trim()||'',notes:cols[colMap.notes]?.trim()||''};
-      if(row.amount>0)pendingCSVRows.push(row);rows.push(row);
+      const rawType=(cols[colMap.type]?.trim()||'expense').toLowerCase();
+      const txType=rawType==='income'?'income':'expense';
+      const rawCat=cols[colMap.category]?.trim()||'';
+      const rawBank=cols[colMap.bank]?.trim()||'';
+      const rawPayment=cols[colMap['payment method']]?.trim()||'';
+      const matchedCat=fuzzyMatchCategory(rawCat,txType);
+      const matchedBank=fuzzyMatchBank(rawBank);
+      const matchedPayment=fuzzyMatchPayment(rawPayment);
+      if(rawCat&&matchedCat!==rawCat)warnings++;
+      const row={date:cols[colMap.date]?.trim()||'',type:txType,description:cols[colMap.description]?.trim()||'',category:matchedCat,amount:parseFloat(cols[colMap.amount])||0,payment:matchedPayment,bank:matchedBank,tags:cols[colMap.tags]?.trim()||'',notes:cols[colMap.notes]?.trim()||''};
+      if(row.amount>0)pendingCSVRows.push(row);
     }
-    document.getElementById('csvPreview').innerHTML=`<div class="alert-banner success"><div class="alert-banner-icon">✅</div><div><div class="alert-banner-text">Found ${pendingCSVRows.length} valid transaction${pendingCSVRows.length!==1?'s':''} to import.</div><div class="alert-banner-sub">${pendingCSVRows.slice(0,3).map(r=>`${r.description} · ₹${r.amount}`).join(' · ')}${pendingCSVRows.length>3?` · +${pendingCSVRows.length-3} more`:''}</div></div></div>`;
+    const warningNote=warnings>0?`<div class="alert-banner warning" style="margin-top:.5rem;"><div class="alert-banner-icon">⚠</div><div><div class="alert-banner-text">${warnings} category/bank name${warnings!==1?'s were':' was'} auto-matched to the closest known value.</div><div class="alert-banner-sub">Review before confirming import.</div></div></div>`:'';
+    document.getElementById('csvPreview').innerHTML=`<div class="alert-banner success"><div class="alert-banner-icon">✅</div><div><div class="alert-banner-text">Found ${pendingCSVRows.length} valid transaction${pendingCSVRows.length!==1?'s':''} to import.</div><div class="alert-banner-sub">${pendingCSVRows.slice(0,3).map(r=>`${r.description} · ₹${r.amount}`).join(' · ')}${pendingCSVRows.length>3?` · +${pendingCSVRows.length-3} more`:''}</div></div></div>${warningNote}`;
     document.getElementById('importCSVBtn').style.display=pendingCSVRows.length>0?'':'none';
   };reader.readAsText(file);
 }
@@ -1498,9 +1700,42 @@ function confirmCSVImport(){
   pendingCSVRows.forEach(row=>{demoTransactions.unshift({id:Date.now()+Math.random(),type:row.type==='income'?'income':'expense',amount:row.amount,description:row.description,category:row.category,date:row.date,icon:getCategoryIcon(row.category),payment:row.payment,bank:row.bank,tags:row.tags,notes:row.notes,recurring:false});});
   toast(`${pendingCSVRows.length} transactions imported!`);pendingCSVRows=[];closeModal('importCSVModal');renderAllTransactions();renderDashboard();
 }
-function downloadCSVTemplate(){
-  const csv='Date,Type,Description,Category,Amount,Payment Method,Bank,Tags,Notes\n2026-05-01,expense,Groceries at DMart,Groceries,2500,UPI,HDFC Bank,essential,\n2026-05-01,income,Monthly Salary,Salary,85000,Bank Transfer,SBI Account,work,April salary\n';
-  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:'financeflow_template.csv'});a.click();URL.revokeObjectURL(a.href);toast('Template downloaded!');
+function downloadCSVTemplate(type='transactions'){
+  let csv,filename;
+  const validCategories=appCategories.expense.concat(appCategories.income).join(' | ');
+  const validPayments='Cash | UPI | Credit Card | Debit Card | Bank Transfer | Google Pay | PhonePe | Paytm | Net Banking';
+  const validBanks=demoBanks.map(b=>b.name).join(' | ');
+  const validTypes='expense | income';
+  if(type==='transactions'){
+    csv=`Date,Type,Description,Category,Amount,Payment Method,Bank,Tags,Notes\n`;
+    csv+=`# Valid Types: ${validTypes}\n`;
+    csv+=`# Valid Categories: ${validCategories}\n`;
+    csv+=`# Valid Payment Methods: ${validPayments}\n`;
+    csv+=`# Valid Banks (add yours in Settings): ${validBanks}\n`;
+    csv+=`2026-05-01,expense,Groceries at DMart,Groceries,2500,UPI,HDFC Bank,essential,Weekly groceries\n`;
+    csv+=`2026-05-01,income,Monthly Salary,Salary,85000,Bank Transfer,SBI,work,April salary\n`;
+    csv+=`2026-05-02,expense,Netflix Subscription,Entertainment,649,Credit Card,ICICI Credit Card,recurring,\n`;
+    filename='financeflow_transactions_template.csv';
+  } else if(type==='investments'){
+    const validCountries='india | international';
+    const validInvTypes=investTypesByCountry.india.concat(investTypesByCountry.international).filter((v,i,a)=>a.indexOf(v)===i).join(' | ');
+    csv=`Country,Type,Name,Invested,Current Value,Platform,Start Date,Notes\n`;
+    csv+=`# Valid Countries: ${validCountries}\n`;
+    csv+=`# Valid Types: ${validInvTypes}\n`;
+    csv+=`india,Mutual Fund,Parag Parikh Flexi Cap,150000,192000,Kuvera,2022-01-15,Long-term SIP\n`;
+    csv+=`india,Fixed Deposit,HDFC FD 7.25%,200000,214500,HDFC Bank,2024-01-01,1 yr FD\n`;
+    csv+=`international,US ETF,NASDAQ 100 ETF,25000,31200,INDmoney,2023-07-01,US tech\n`;
+    filename='financeflow_investments_template.csv';
+  } else if(type==='goals'){
+    const validGoalCats='Emergency Fund | Vacation | Vehicle | Home Down Payment | Education | Wedding | Retirement | Investment | Gadget | Other';
+    csv=`Name,Icon,Target,Saved,Deadline,Monthly Contribution,Category,Notes\n`;
+    csv+=`# Valid Categories: ${validGoalCats}\n`;
+    csv+=`Emergency Fund,🛡️,500000,285000,2026-12-31,15000,Emergency Fund,6 months expenses\n`;
+    csv+=`Goa Vacation,🏖️,50000,22000,2026-10-01,5000,Vacation,Family trip\n`;
+    csv+=`New Laptop,💻,120000,48000,2026-08-15,12000,Gadget,MacBook Pro\n`;
+    filename='financeflow_goals_template.csv';
+  }
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:filename});a.click();URL.revokeObjectURL(a.href);toast(`${type.charAt(0).toUpperCase()+type.slice(1)} template downloaded!`);
 }
 function exportAsCSV(){
   let csv='Date,Type,Description,Category,Amount,Payment Method,Bank,Tags,Notes\n';
