@@ -568,26 +568,31 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
       <h1 class="login-title" id="authTitle">Welcome back</h1>
       <p class="login-subtitle" id="authSubtitle">Sign in to your FinanceFlow account</p>
     </div>
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tabSignIn" onclick="switchAuthTab('signin')">Sign In</button>
-      <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Create Account</button>
-    </div>
-    <!-- Sign In -->
-    <div id="signInPanel">
-      <div id="authError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius-md);padding:.75rem 1rem;font-size:.875rem;color:#b91c1c;margin-bottom:1rem;"></div>
-      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="loginEmail" placeholder="your@email.com" autocomplete="email"></div>
-      <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="loginPassword" placeholder="••••••••" autocomplete="current-password"></div>
-      <div class="checkbox-group"><input type="checkbox" id="rememberMe" checked><label for="rememberMe">Keep me signed in</label></div>
-      <button class="btn btn-primary" id="signInBtn" style="width:100%;margin-top:1.25rem;justify-content:center;padding:.875rem;" onclick="doSignIn()">Sign In →</button>
-      <div style="text-align:center;margin-top:.875rem;"><a href="#" style="color:var(--primary);text-decoration:none;font-size:.85rem;font-weight:500;" onclick="return false;">Forgot password?</a></div>
-    </div>
-    <!-- Register -->
-    <div id="registerPanel" style="display:none;">
-      <div id="regError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius-md);padding:.75rem 1rem;font-size:.875rem;color:#b91c1c;margin-bottom:1rem;"></div>
-      <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" id="regName" placeholder="Rahul Sharma" autocomplete="name"></div>
-      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="regEmail" placeholder="your@email.com" autocomplete="email"></div>
-      <div class="form-group"><label class="form-label">Password <span style="color:var(--text-3);font-size:.78rem;font-weight:400;">(min 6 chars)</span></label><input type="password" class="form-input" id="regPassword" placeholder="Choose a strong password" autocomplete="new-password"></div>
-      <button class="btn btn-primary" id="registerBtn" style="width:100%;margin-top:.5rem;justify-content:center;padding:.875rem;" onclick="doRegister()">Create Account →</button>
+    <!-- Clerk UI mounts here when configured -->
+    <div id="clerkMount" style="display:none;"></div>
+    <!-- Traditional email/password auth (fallback / when Clerk not configured) -->
+    <div id="traditionalAuth">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabSignIn" onclick="switchAuthTab('signin')">Sign In</button>
+        <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Create Account</button>
+      </div>
+      <!-- Sign In -->
+      <div id="signInPanel">
+        <div id="authError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius-md);padding:.75rem 1rem;font-size:.875rem;color:#b91c1c;margin-bottom:1rem;"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="loginEmail" placeholder="your@email.com" autocomplete="email"></div>
+        <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="loginPassword" placeholder="••••••••" autocomplete="current-password"></div>
+        <div class="checkbox-group"><input type="checkbox" id="rememberMe" checked><label for="rememberMe">Keep me signed in</label></div>
+        <button class="btn btn-primary" id="signInBtn" style="width:100%;margin-top:1.25rem;justify-content:center;padding:.875rem;" onclick="doSignIn()">Sign In →</button>
+        <div style="text-align:center;margin-top:.875rem;"><a href="#" style="color:var(--primary);text-decoration:none;font-size:.85rem;font-weight:500;" onclick="return false;">Forgot password?</a></div>
+      </div>
+      <!-- Register -->
+      <div id="registerPanel" style="display:none;">
+        <div id="regError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius-md);padding:.75rem 1rem;font-size:.875rem;color:#b91c1c;margin-bottom:1rem;"></div>
+        <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" id="regName" placeholder="Rahul Sharma" autocomplete="name"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="regEmail" placeholder="your@email.com" autocomplete="email"></div>
+        <div class="form-group"><label class="form-label">Password <span style="color:var(--text-3);font-size:.78rem;font-weight:400;">(min 6 chars)</span></label><input type="password" class="form-input" id="regPassword" placeholder="Choose a strong password" autocomplete="new-password"></div>
+        <button class="btn btn-primary" id="registerBtn" style="width:100%;margin-top:.5rem;justify-content:center;padding:.875rem;" onclick="doRegister()">Create Account →</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2241,7 +2246,94 @@ function doSignOut(){
   demoLending=[...defaultLending];demoSubscriptions=[...defaultSubscriptions];
   demoBanks=[...defaultBanks];demoCards=[...defaultCards];demoInvestments=[...defaultInvestments];
   document.getElementById('appContainer').classList.add('hidden');
-  document.getElementById('loginPage').classList.remove('hidden');
+  // Sign out of Clerk too if active
+  if(window._clerk){
+    window._clerk.signOut().then(()=>{
+      document.getElementById('clerkMount').style.display='';
+      window._clerk.mountSignIn(document.getElementById('clerkMount'));
+      document.getElementById('loginPage').classList.remove('hidden');
+    });
+  } else {
+    document.getElementById('loginPage').classList.remove('hidden');
+  }
+}
+
+/* ══ CLERK SSO ══ */
+async function initClerk(publishableKey){
+  return new Promise(resolve=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js';
+    s.crossOrigin='anonymous';
+    s.onload=async()=>{
+      try{
+        const clerk=new window.Clerk(publishableKey);
+        await clerk.load({
+          appearance:{
+            variables:{
+              colorPrimary:'#047857',
+              colorBackground:'#ffffff',
+              fontFamily:"'Sora', 'DM Sans', sans-serif",
+              borderRadius:'0.75rem',
+              fontSize:'0.9rem'
+            }
+          }
+        });
+        window._clerk=clerk;
+        // Already signed in?
+        if(clerk.user){
+          await handleClerkSignIn();
+        } else {
+          // Show Clerk, hide traditional form
+          document.getElementById('clerkMount').style.display='';
+          document.getElementById('traditionalAuth').style.display='none';
+          clerk.mountSignIn(document.getElementById('clerkMount'));
+          // Listen for sign-in completion
+          clerk.addListener(({user})=>{ if(user&&!_authToken) handleClerkSignIn(); });
+        }
+      } catch(e){
+        console.warn('Clerk init error:',e);
+        // Fall back to traditional login
+        document.getElementById('clerkMount').style.display='none';
+        document.getElementById('traditionalAuth').style.display='';
+      }
+      resolve();
+    };
+    s.onerror=()=>{
+      document.getElementById('clerkMount').style.display='none';
+      document.getElementById('traditionalAuth').style.display='';
+      resolve();
+    };
+    document.head.appendChild(s);
+  });
+}
+
+async function handleClerkSignIn(){
+  try{
+    const u=window._clerk.user;
+    const sessionToken=await window._clerk.session.getToken();
+    const email=(u.primaryEmailAddress?.emailAddress||'').toLowerCase();
+    const name=[u.firstName,u.lastName].filter(Boolean).join(' ')||email.split('@')[0];
+    const avatar=u.imageUrl||'';
+    const data=await apiPost('/api/auth/clerk',{
+      sessionToken,
+      clerkUserId:u.id,
+      email,name,avatar
+    });
+    _authToken=data.token;
+    localStorage.setItem('ff_token',_authToken);
+    currentUser=data.user;
+    if(data.user.is_new){
+      document.getElementById('loginPage').classList.add('hidden');
+      document.getElementById('onboardingPage').classList.remove('hidden');
+      document.getElementById('obName').value=(data.user.name||'').split(' ')[0];
+    } else {
+      await loadUserData();
+      launchApp();
+    }
+  }catch(e){
+    console.error('Clerk sign-in error:',e);
+    toast('Sign-in failed: '+(e.message||'Please try again'));
+  }
 }
 
 /* ══ DATA SYNC ══ */
@@ -2432,7 +2524,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   ['transactionDate','lendingStartDate','subscriptionStartDate','investStartDate'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=today;});
   setupNavigation();setupPillToggles();setupFormHandlers();setupPinPad();
 
-  // Check for existing session
+  // Check for existing FinanceFlow session token
   if(_authToken){
     try{
       currentUser=await apiFetch('/api/user');
@@ -2443,9 +2535,25 @@ document.addEventListener('DOMContentLoaded',async()=>{
       _authToken='';localStorage.removeItem('ff_token');sessionStorage.removeItem('ff_token');
     }
   }
-  // No session — show login
+
+  // Show login page
   document.getElementById('loginPage').classList.remove('hidden');
-  // Allow Enter key to trigger sign in
+
+  // Try to load Clerk if configured
+  try{
+    const cfg=await fetch('/api/auth/clerk-config').then(r=>r.json());
+    if(cfg.publishableKey){
+      await initClerk(cfg.publishableKey);
+      // If Clerk handled auth, we're done
+      if(_authToken) return;
+      // If Clerk mounted its UI, don't also show traditional form
+      if(window._clerk && !window._clerk.user) return;
+    }
+  }catch(e){
+    console.warn('Clerk config not available, using traditional auth');
+  }
+
+  // Fallback: traditional email/password login
   ['loginEmail','loginPassword'].forEach(id=>{
     document.getElementById(id)?.addEventListener('keydown',e=>{if(e.key==='Enter')doSignIn();});
   });
