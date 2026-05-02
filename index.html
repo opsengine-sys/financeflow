@@ -434,7 +434,21 @@ select option{background:var(--surface);color:var(--text)}
 .template-card-name{font-weight:600;color:var(--text);font-size:.9rem}
 .template-card-desc{font-size:.78rem;color:var(--text-2);margin-top:.1rem}
 .template-card-dl{font-size:.8rem;color:var(--primary);font-weight:600;white-space:nowrap}
-/* Responsive */
+/* ── two-col: never overflow on mobile ── */
+.two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(440px,100%),1fr));gap:1rem;margin-bottom:1rem}
+/* ── Clerk mount fills the login card when active ── */
+.clerk-active .login-logo { display:none !important; }
+.clerk-active #traditionalAuth { display:none !important; }
+#clerkMount { width:100%; min-height:0; }
+/* When Clerk is active: dissolve the outer card so only Clerk's card shows */
+.login-card.clerk-active {
+  background:transparent !important;
+  box-shadow:none !important;
+  border:none !important;
+  padding:0 !important;
+  overflow:visible !important;
+}
+/* ── Responsive ── */
 @media(max-width:1024px){
   .sidebar{transform:translateX(-100%);padding-top:calc(var(--topbar-h) + 1rem)}
   .sidebar.mobile-visible{transform:translateX(0)}
@@ -442,29 +456,89 @@ select option{background:var(--surface);color:var(--text)}
   .bottom-nav{display:block}
   .main-content{padding-bottom:6rem}
   .mobile-topbar{display:flex}
+  .two-col{grid-template-columns:1fr}
 }
 @media(max-width:768px){
-  .header-title{font-size:1.5rem}
-  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .header-title{font-size:1.375rem}
+  .header-subtitle{font-size:.82rem}
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:.625rem}
+  .stat-value{font-size:1.45rem}
   .form-row{grid-template-columns:1fr}
   .two-col{grid-template-columns:1fr}
-  .modal-body,.modal-header{padding-left:1.25rem;padding-right:1.25rem}
-  .main-content{padding:calc(var(--topbar-h) + 1.25rem) 1rem 6rem}
-  .modal{border-radius:var(--radius-xl) var(--radius-xl) var(--radius-md) var(--radius-md);margin-top:auto;max-height:88vh}
-  .modal-overlay{align-items:flex-end}
-  .login-card{padding:1.75rem}
-  .bank-update-fields{flex-direction:column;gap:.5rem}
+  .modal-body,.modal-header,.modal-footer{padding-left:1.125rem;padding-right:1.125rem}
+  .modal{border-radius:var(--radius-xl) var(--radius-xl) 0 0;margin-top:auto;max-height:92vh;width:100%;max-width:100%}
+  .modal-overlay{align-items:flex-end;padding:0}
+  .login-container{padding:0;align-items:flex-end;background:linear-gradient(135deg,#f0fdf4,#ecfdf5)}
+  .login-card{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding:2rem 1.5rem 2.5rem;max-width:100%;box-shadow:0 -8px 40px rgba(0,0,0,.12);overflow-y:auto;max-height:92vh}
+  .bank-update-fields{flex-direction:column;gap:.5rem;width:100%}
   .bank-update-input,.bank-update-date{width:100%}
-  .greeting-card{padding:1.25rem}
-  .greeting-name{font-size:1.25rem}
-  .weather-widget{min-width:130px}
-  .market-pulse{grid-template-columns:repeat(3,1fr)}
-  .tx-filter-bar{top:calc(var(--topbar-h) + .25rem)}
+  .greeting-card{padding:1rem 1.25rem}
+  .greeting-name{font-size:1.1rem}
+  .greeting-fun{display:none}
+  .greeting-top{flex-direction:column;gap:.75rem}
+  .weather-widget{width:100%;min-width:0}
+  .market-pulse{grid-template-columns:repeat(3,1fr);gap:.5rem}
+  .market-ticker{padding:.625rem .75rem}
+  .market-ticker-price{font-size:.875rem}
+  .tx-filter-bar{top:calc(var(--topbar-h) + .25rem);padding:.625rem .875rem;gap:.375rem}
+  .tx-filter-search{min-width:120px}
+  .tx-type-pills{flex-wrap:wrap;gap:.25rem}
+  .main-content{padding:calc(var(--topbar-h) + 1rem) .875rem 6rem}
+  .page-header{margin-bottom:1rem;gap:.625rem}
+  .card{padding:1rem 1.125rem}
+  .card-header{margin-bottom:.875rem}
+  .category-legend{grid-template-columns:repeat(2,1fr)}
+  .chart-container svg{max-width:100%}
+  .chart-scroll svg{min-width:300px}
+  .ob-option-grid{grid-template-columns:1fr 1fr;gap:.5rem}
+  .ob-option{padding:.75rem .5rem}
+  .ob-option-sub{display:none}
+  .goal-item{flex-wrap:wrap}
+  .invest-right{text-align:left}
+  .page-header .header-actions .btn span{display:none}
 }
 @media(max-width:480px){
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:.5rem}
+  .stat-card{padding:.875rem 1rem}
+  .stat-value{font-size:1.3rem}
+  .stat-icon{width:36px;height:36px;font-size:1.1rem}
+  .market-pulse{grid-template-columns:repeat(2,1fr);gap:.375rem}
+  .tx-filter-bar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .tx-filter-bar::-webkit-scrollbar{display:none}
+  .tx-type-pills{display:none}
+  .login-card{padding:1.5rem 1.125rem 1.75rem}
+  .greeting-card{padding:.875rem 1rem}
+  .greeting-name{font-size:1rem}
+  .header-title{font-size:1.25rem}
+  .card{padding:.875rem}
+  .transaction-item{padding:.625rem .75rem}
+  .transaction-icon{width:34px;height:34px;font-size:1rem}
+  .budget-item{padding:.75rem .875rem}
+  .main-content{padding:calc(var(--topbar-h) + .75rem) .75rem 5.5rem}
+  .bottom-nav{padding:.375rem 0}
+  .bottom-nav-link{font-size:.65rem;gap:.15rem}
+  .bottom-nav-icon{font-size:1.1rem}
+  .fab{bottom:5rem;right:1rem;width:50px;height:50px;font-size:1.35rem}
+}
+@media(max-width:360px){
   .stats-grid{grid-template-columns:1fr}
-  .market-pulse{grid-template-columns:repeat(2,1fr)}
-  .tx-filter-bar{gap:.375rem}
+  .main-content{padding:calc(var(--topbar-h) + .625rem) .625rem 5.5rem}
+  .stat-value{font-size:1.2rem}
+  .ob-option-grid{grid-template-columns:1fr}
+}
+/* prevent text overflow globally */
+.transaction-title,.budget-item-name,.goal-name,.invest-name,.account-list-name,.settings-item-title{
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%
+}
+.stat-value,.greeting-name{word-break:break-word}
+/* Charts fully responsive */
+.chart-container{width:100%;overflow:hidden}
+.chart-container svg{width:100%;height:auto}
+.chart-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:.25rem}
+.chart-scroll svg{min-width:280px;max-width:none}
+/* Fix modal bottom sheet on mobile */
+@media(max-width:768px){
+  .modal-lg{max-width:100%}
 }
 .hidden{display:none!important}
 /* ── Onboarding ── */
@@ -2647,6 +2721,9 @@ async function initClerk(publishableKey){
         if(clerk.user){
           await handleClerkSignIn();
         } else {
+          // Hide FF logo/header — Clerk has its own header
+          const loginCard=document.querySelector('.login-card');
+          if(loginCard) loginCard.classList.add('clerk-active');
           document.getElementById('clerkMount').style.display='';
           document.getElementById('traditionalAuth').style.display='none';
           clerk.mountSignIn(document.getElementById('clerkMount'));
@@ -2654,6 +2731,8 @@ async function initClerk(publishableKey){
         }
       } catch(e){
         console.warn('Clerk init error:',e);
+        const loginCard=document.querySelector('.login-card');
+        if(loginCard) loginCard.classList.remove('clerk-active');
         document.getElementById('clerkMount').style.display='none';
         document.getElementById('traditionalAuth').style.display='';
       }
