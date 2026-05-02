@@ -437,16 +437,31 @@ select option{background:var(--surface);color:var(--text)}
 /* ── two-col: never overflow on mobile ── */
 .two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(440px,100%),1fr));gap:1rem;margin-bottom:1rem}
 /* ── Clerk mount fills the login card when active ── */
-.clerk-active .login-logo { display:none !important; }
+.clerk-active .login-title  { display:none !important; }
+.clerk-active .login-subtitle { display:none !important; }
 .clerk-active #traditionalAuth { display:none !important; }
 #clerkMount { width:100%; min-height:0; }
-/* When Clerk is active: dissolve the outer card so only Clerk's card shows */
+/* When Clerk is active: show logo icon centred, then Clerk's card directly below */
 .login-card.clerk-active {
   background:transparent !important;
   box-shadow:none !important;
   border:none !important;
   padding:0 !important;
   overflow:visible !important;
+  align-items:center !important;
+}
+/* Keep the logo icon visible and tightly spaced above Clerk card */
+.login-card.clerk-active .login-logo {
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  margin-bottom:0.75rem !important;
+  padding:0 !important;
+}
+.login-card.clerk-active .login-logo-icon {
+  width:3rem !important;
+  height:3rem !important;
+  font-size:1rem !important;
 }
 /* ── Responsive ── */
 @media(max-width:1024px){
