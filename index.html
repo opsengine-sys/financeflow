@@ -2619,11 +2619,19 @@ function doSignOut(){
 async function initClerk(publishableKey){
   return new Promise(resolve=>{
     const s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js';
+    // Clerk v4 browser bundle: set data-clerk-publishable-key BEFORE appending
+    // so the bundle self-instantiates window.Clerk during its IIFE
+    s.src='https://cdn.jsdelivr.net/npm/@clerk/clerk-js@4/dist/clerk.browser.js';
+    s.setAttribute('data-clerk-publishable-key', publishableKey);
     s.crossOrigin='anonymous';
+    s.async=false; // synchronous so IIFE runs before onload fires
     s.onload=async()=>{
       try{
-        const clerk=new window.Clerk(publishableKey);
+        // After the bundle runs its IIFE, window.Clerk is a pre-built instance
+        const clerk=window.Clerk;
+        if(!clerk||typeof clerk.load!=='function'){
+          throw new Error('Clerk instance not available');
+        }
         await clerk.load({
           appearance:{
             variables:{
@@ -2636,20 +2644,16 @@ async function initClerk(publishableKey){
           }
         });
         window._clerk=clerk;
-        // Already signed in?
         if(clerk.user){
           await handleClerkSignIn();
         } else {
-          // Show Clerk, hide traditional form
           document.getElementById('clerkMount').style.display='';
           document.getElementById('traditionalAuth').style.display='none';
           clerk.mountSignIn(document.getElementById('clerkMount'));
-          // Listen for sign-in completion
           clerk.addListener(({user})=>{ if(user&&!_authToken) handleClerkSignIn(); });
         }
       } catch(e){
         console.warn('Clerk init error:',e);
-        // Fall back to traditional login
         document.getElementById('clerkMount').style.display='none';
         document.getElementById('traditionalAuth').style.display='';
       }
