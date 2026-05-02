@@ -214,6 +214,12 @@ def init_db():
     );
     """)
     db.commit()
+    # Migrate existing databases: add clerk_id column if missing
+    try:
+        db.execute("ALTER TABLE users ADD COLUMN clerk_id TEXT DEFAULT ''")
+        db.commit()
+    except Exception:
+        pass  # Column already exists
     db.close()
 
 # ─── Auth Helpers ─────────────────────────────────────────────────────────────
