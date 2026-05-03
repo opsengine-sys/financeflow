@@ -117,9 +117,8 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
 .btn-ghost:hover{background:var(--bg-alt);color:var(--primary)}
 .btn-sm{padding:.4rem .875rem;font-size:.8rem}
 /* Greeting */
-.greeting-card{background:linear-gradient(135deg,#046c4e 0%,#0f9d6a 60%,#059669 100%);border-radius:var(--radius-xl);padding:1.5rem 1.75rem;margin-bottom:1.25rem;color:#fff;position:relative;overflow:hidden}
-.greeting-card::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,0) 28%)}
-.greeting-card::after{content:'';position:absolute;inset:0;background:none}
+.greeting-card{background:linear-gradient(135deg,#046c4e 0%,#0f9d6a 60%,#059669 100%);border-radius:var(--radius-xl);padding:1.5rem 1.75rem;margin-bottom:1.25rem;color:#fff;position:relative;overflow:hidden;box-shadow:none;border-top:0}
+.greeting-card::before,.greeting-card::after{display:none}
 .greeting-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem}
 .greeting-name{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:700;line-height:1.2}
 .greeting-sub{font-size:.88rem;opacity:.85;margin-top:.25rem}
@@ -998,61 +997,6 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
       <div class="card"><div id="banksList"></div></div>
     </div>
 
-    <!-- Investments -->
-    <div id="investmentsPage" class="page hidden">
-      <div class="page-header">
-        <div><h1 class="header-title">Investments</h1><p class="header-subtitle">Portfolio &amp; live market data</p></div>
-        <div class="header-actions">
-          <select class="period-select" id="investCountry" onchange="renderInvestments()">
-            <option value="india">🇮🇳 India</option>
-            <option value="international">🌍 International</option>
-            <option value="all">📊 All</option>
-          </select>
-          <button class="btn btn-primary" onclick="showAddInvestmentModal()">+ Add Investment</button>
-        </div>
-      </div>
-      <div class="card" style="margin-bottom:.875rem;">
-        <div class="card-header">
-          <h2 class="card-title"><span class="market-live-dot"></span>Market Pulse</h2>
-          <div style="display:flex;gap:.375rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
-            <select id="marketFilterSelect" onchange="applyMarketFilter()" style="padding:.45rem .7rem;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font-size:.8rem;max-width:100%;">
-              <option value="all">All</option>
-              <option value="index">Indices</option>
-              <option value="commodity">Commodities</option>
-              <option value="crypto">Crypto</option>
-              <option value="stock">Stocks</option>
-              <option value="equities">Equities</option>
-            </select>
-            <button class="btn btn-ghost btn-sm" onclick="openTickerSelectModal()" title="Customize tickers">⚙ Tickers</button>
-            <button class="btn btn-ghost btn-sm" onclick="fetchMarketData()" id="refreshMktBtn">↻ Refresh</button>
-          </div>
-        </div>
-        <div class="market-pulse" id="marketPulse">
-          <div style="grid-column:1/-1;text-align:center;padding:.5rem;font-size:.85rem;color:var(--text-2);">Loading market data…</div>
-        </div>
-        <div class="market-detail-card" id="marketDetailCard">
-          <div class="market-detail-head">
-            <div>
-              <div class="market-detail-title" id="marketDetailTitle">Tap a ticker to view details</div>
-              <div class="market-detail-sub" id="marketDetailSub">See a quick trend view, price range, and source-backed live stats.</div>
-            </div>
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end;">
-              <select id="marketViewSelect" onchange="changeMarketView(this.value)" style="padding:.45rem .7rem;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font-size:.8rem;max-width:100%;">
-                <option value="today">Today</option>
-                <option value="week">1W</option>
-                <option value="month">1M</option>
-                <option value="year">1Y</option>
-              </select>
-            </div>
-          </div>
-          <div class="market-detail-meta" id="marketDetailMeta"></div>
-          <div class="market-detail-chart" id="marketDetailChart"></div>
-        </div>
-        <p style="font-size:.72rem;color:var(--text-3);margin-top:.25rem;">Crypto via CoinGecko · indices and stocks via Yahoo Finance · commodities via Yahoo Finance futures.</p>
-      </div>
-  <div class="card"><div id="investmentsList"></div></div>
-    </div>
-
     <!-- Reports -->
     <div id="reportsPage" class="page hidden">
       <div class="page-header"><h1 class="header-title">Reports &amp; Export</h1></div>
@@ -1322,19 +1266,6 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
     </div>
   </div>
   <div class="modal-footer"><button class="btn btn-danger btn-sm" id="deleteCardBtn">🗑 Delete</button><button class="btn btn-secondary btn-sm" onclick="closeModal('editCardModal')">Cancel</button><button class="btn btn-primary btn-sm" id="saveCardBtn">Save Changes</button></div></div>
-</div>
-
-<!-- Add Investment -->
-<div id="addInvestmentModal" class="modal-overlay">
-  <div class="modal"><div class="modal-header"><h2 class="modal-title">Add Investment</h2><button class="modal-close" onclick="closeModal('addInvestmentModal')">×</button></div>
-  <div class="modal-body"><form id="investmentForm">
-    <div class="form-row"><div class="form-group"><label class="form-label">Country</label><select class="form-select" id="investCountryForm" required><option value="india">🇮🇳 India</option><option value="international">🌍 International</option></select></div><div class="form-group"><label class="form-label">Type</label><select class="form-select" id="investType" required></select></div></div>
-    <div class="form-group"><label class="form-label">Investment Name</label><input type="text" class="form-input" id="investName" placeholder="e.g. Parag Parikh Flexi Cap Fund" required></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Invested (₹)</label><input type="number" class="form-input" id="investAmount" min="0" required></div><div class="form-group"><label class="form-label">Current Value (₹)</label><input type="number" class="form-input" id="investCurrentVal" min="0" required></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="investStartDate" required></div><div class="form-group"><label class="form-label">Platform / Broker</label><input type="text" class="form-input" id="investPlatform" placeholder="Zerodha, Groww…"></div></div>
-    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="investNotes" style="min-height:60px;"></textarea></div>
-    <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:.875rem;">Add Investment</button>
-  </form></div></div>
 </div>
 
 <!-- Import CSV -->
