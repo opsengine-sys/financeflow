@@ -2483,13 +2483,6 @@ function setupFormHandlers(){
     if(_authToken)apiSaveCard(c);
     toast('Card added!');closeModal('addCardModal');this.reset();renderBanks();if(document.getElementById('paymentMethodsModal').classList.contains('active'))renderPmList();
   });
-  document.getElementById('investmentForm').addEventListener('submit',function(e){
-    e.preventDefault();const invested=parseFloat(document.getElementById('investAmount').value),cv=parseFloat(document.getElementById('investCurrentVal').value);if(!invested||!cv){toast('Enter amounts.','error');return;}
-    const inv={id:Date.now(),country:document.getElementById('investCountryForm').value,type:document.getElementById('investType').value,name:document.getElementById('investName').value,invested,currentVal:cv,startDate:document.getElementById('investStartDate').value,platform:document.getElementById('investPlatform').value,notes:document.getElementById('investNotes').value};
-    demoInvestments.push(inv);
-    if(_authToken)apiSaveInvestment(inv);
-    toast('Investment added!');closeModal('addInvestmentModal');this.reset();renderInvestments();
-  });
   document.getElementById('goalForm').addEventListener('submit',function(e){
     e.preventDefault();const target=parseFloat(document.getElementById('goalTarget').value);if(!target){toast('Enter target amount.','error');return;}
     const g={id:Date.now(),name:document.getElementById('goalName').value,icon:document.getElementById('goalIcon').value||'🎯',target,saved:parseFloat(document.getElementById('goalSaved').value)||0,deadline:document.getElementById('goalDeadline').value,monthly:parseFloat(document.getElementById('goalMonthly').value)||0,category:document.getElementById('goalCategory').value,notes:document.getElementById('goalNotes').value};
