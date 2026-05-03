@@ -1720,7 +1720,7 @@ function saveTickerSelection(){
 }
 
 /* ══ AI INSIGHTS ══ */
-function renderAIInsights(){
+function _renderAIInsightsFallback(){
   const el=document.getElementById('aiInsightsContainer');
   const badge=document.getElementById('aiInsightsBadge');
   const reviewEl=document.getElementById('monthReviewContainer');
@@ -1833,6 +1833,78 @@ function renderAIInsights(){
   }
   el.innerHTML=`<div class="insight-chips">${insights.slice(0,5).map(({icon,text},i)=>`<div class="insight-chip" style="animation:fadeInUp .35s ease ${i*60}ms both"><span class="insight-chip-icon">${icon}</span><p class="insight-chip-text">${text}</p></div>`).join('')}</div>`;
   if(badge)badge.textContent=`${insights.length} insight${insights.length!==1?'s':''}`;
+}
+
+async function renderAIInsights(){
+  const el=document.getElementById('aiInsightsContainer');
+  const badge=document.getElementById('aiInsightsBadge');
+  const reviewEl=document.getElementById('monthReviewContainer');
+  const labelEl=document.getElementById('insightsMonthLabel');
+  if(!el)return;
+
+  const now=new Date();
+  const monthName=now.toLocaleString('en-IN',{month:'long'});
+  const year=now.getFullYear();
+  if(labelEl)labelEl.textContent=`AI analysis for ${monthName} ${year}`;
+
+  /* ── Local stats for meta pills ── */
+  const expTxns=demoTransactions.filter(t=>t.type==='expense');
+  const totalIncome=demoTransactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const totalExp=expTxns.reduce((s,t)=>s+t.amount,0);
+  const savings=totalIncome-totalExp;
+  const savRate=totalIncome>0?(savings/totalIncome)*100:0;
+  const overBudgets=demoBudgets.filter(b=>b.limit>0&&(b.spent/b.limit)>=0.9);
+
+  function _metaHtml(){
+    return`<div class="month-review-meta">
+      ${totalIncome>0?`<span class="review-stat">💰 ₹${(totalIncome/1000).toFixed(0)}k income</span>`:''}
+      ${totalExp>0?`<span class="review-stat">💸 ₹${(totalExp/1000).toFixed(0)}k spent</span>`:''}
+      ${savRate>0?`<span class="review-stat">📊 ${savRate.toFixed(1)}% saved</span>`:''}
+      ${demoBudgets.length>0?`<span class="review-stat">🎯 ${demoBudgets.length-overBudgets.length}/${demoBudgets.length} budgets OK</span>`:''}
+      ${demoGoals.length>0?`<span class="review-stat">🏆 ${demoGoals.length} goals active</span>`:''}
+    </div>`;
+  }
+
+  /* ── Loading state ── */
+  if(badge)badge.textContent='✨ Thinking…';
+  el.innerHTML=`<div class="insight-chip"><span class="insight-chip-icon">🤖</span><p class="insight-chip-text" style="color:var(--text-2);font-style:italic;">Asking AI for personalised financial insights…</p></div>`;
+  if(reviewEl)reviewEl.innerHTML=`<div class="month-review-summary"><p class="month-review-text" style="color:var(--text-3);font-style:italic;">Analysing your finances with AI…</p></div>`;
+
+  try{
+    const result=await apiFetch('/api/ai/insights',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        transactions:demoTransactions,
+        budgets:demoBudgets,
+        goals:demoGoals,
+        subscriptions:demoSubscriptions,
+        banks:demoBanks,
+        cards:demoCards
+      })
+    });
+
+    if(result&&result.error==='FREE_CLOUD_BUDGET_EXCEEDED'){
+      if(badge)badge.textContent='—';
+      _renderAIInsightsFallback();
+      return;
+    }
+
+    if(reviewEl&&result.summary){
+      reviewEl.innerHTML=`<div class="month-review-summary"><p class="month-review-text">${result.summary}</p>${_metaHtml()}</div>`;
+    }
+
+    const chips=result.insights||[];
+    if(chips.length){
+      el.innerHTML=`<div class="insight-chips">${chips.map(({icon,text},i)=>`<div class="insight-chip" style="animation:fadeInUp .35s ease ${i*60}ms both"><span class="insight-chip-icon">${icon}</span><p class="insight-chip-text">${text}</p></div>`).join('')}</div>`;
+      if(badge)badge.textContent=`${chips.length} AI insight${chips.length!==1?'s':''}`;
+    }else{
+      if(badge)badge.textContent='0 insights';
+    }
+  }catch(err){
+    console.warn('AI insights error, falling back to rule-based:',err);
+    _renderAIInsightsFallback();
+  }
 }
 
 /* ══ ANIMATED CHARTS ══ */

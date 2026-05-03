@@ -6,6 +6,7 @@ from flask_cors import CORS
 import sqlite3, jwt, bcrypt, uuid, json, os, requests
 from datetime import datetime, timedelta
 from functools import wraps
+from openai import OpenAI
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app, supports_credentials=True)
@@ -874,6 +875,111 @@ def market_crypto():
         return jsonify(result)
     except Exception:
         return jsonify({})
+
+# ─── AI Insights ──────────────────────────────────────────────────────────────
+
+# the newest OpenAI model is "gpt-5" which was released August 7, 2025.
+# do not change this unless explicitly requested by the user
+_AI_MODEL = 'gpt-5-mini'
+
+_INSIGHTS_SYSTEM = (
+    'You are a personal finance advisor AI for an Indian user. '
+    'Given their monthly financial summary, return ONLY a JSON object with this exact shape:\n'
+    '{"summary":"<2-3 sentence HTML paragraph using <strong> for key numbers/terms>","insights":[{"icon":"emoji","text":"<HTML sentence with <strong> for key figures>"},...]}\n'
+    'Rules:\n'
+    '- insights: 4-5 items, each with a relevant emoji and one concise actionable sentence\n'
+    '- Use ₹ symbol for amounts. Prefer lakhs notation (e.g. ₹1.2L) for large amounts\n'
+    '- summary: cover overall financial health, biggest concern, and one positive observation\n'
+    '- Be specific, direct and encouraging. No generic filler.\n'
+    '- Return ONLY valid JSON, no markdown fences or extra text.'
+)
+
+def _build_finance_prompt(data):
+    txns         = data.get('transactions', [])
+    budgets      = data.get('budgets', [])
+    goals        = data.get('goals', [])
+    subscriptions= data.get('subscriptions', [])
+    banks        = data.get('banks', [])
+    cards        = data.get('cards', [])
+
+    income  = sum(t.get('amount', 0) for t in txns if t.get('type') == 'income')
+    expenses= sum(t.get('amount', 0) for t in txns if t.get('type') == 'expense')
+    savings = income - expenses
+    sav_rate= round(savings / income * 100, 1) if income else 0
+
+    by_cat = {}
+    for t in txns:
+        if t.get('type') == 'expense':
+            c = t.get('category', 'Other')
+            by_cat[c] = by_cat.get(c, 0) + t.get('amount', 0)
+    top_cats = sorted(by_cat.items(), key=lambda x: x[1], reverse=True)[:5]
+
+    budget_lines = [
+        f"{b.get('category')}: ₹{b.get('spent',0):,.0f} / ₹{b.get('limit',0):,.0f} "
+        f"({round(b.get('spent',0)/b.get('limit',1)*100)}%)"
+        for b in budgets if b.get('limit', 0) > 0
+    ]
+    goal_lines = [
+        f"{g.get('name')}: ₹{g.get('saved',0):,.0f} of ₹{g.get('target',0):,.0f} "
+        f"({round(g.get('saved',0)/g.get('target',1)*100)}%)"
+        for g in goals
+    ]
+    sub_monthly = sum(
+        s.get('amount', 0)          if s.get('cycle') == 'Monthly'   else
+        s.get('amount', 0) / 12     if s.get('cycle') == 'Yearly'    else
+        s.get('amount', 0) / 3      if s.get('cycle') == 'Quarterly' else 0
+        for s in subscriptions
+    )
+    total_bank = sum(b.get('balance', 0) for b in banks)
+    total_debt = sum(c.get('outstanding', 0) for c in cards)
+
+    month = datetime.now().strftime('%B %Y')
+    return (
+        f"Month: {month}\n\n"
+        f"Income:   ₹{income:,.0f}\n"
+        f"Expenses: ₹{expenses:,.0f}\n"
+        f"Savings:  ₹{savings:,.0f}  ({sav_rate}% rate)\n\n"
+        f"Top spending categories:\n"
+        + '\n'.join(f'  {cat}: ₹{amt:,.0f}' for cat, amt in top_cats) +
+        f"\n\nBudget status ({len(budgets)} budgets):\n"
+        + ('\n'.join(f'  {b}' for b in budget_lines) or '  None set') +
+        f"\n\nGoals ({len(goals)} active):\n"
+        + ('\n'.join(f'  {g}' for g in goal_lines) or '  None set') +
+        f"\n\nSubscriptions: ~₹{sub_monthly:,.0f}/month\n"
+        f"Bank balances: ₹{total_bank:,.0f}\n"
+        f"Card outstanding: ₹{total_debt:,.0f}\n"
+        f"Net liquid: ₹{total_bank - total_debt:,.0f}\n\n"
+        f"Generate personalised financial insights for this data."
+    )
+
+@app.route('/api/ai/insights', methods=['POST'])
+def ai_insights():
+    """Generate AI-powered financial insights via Replit AI Integrations (OpenAI)."""
+    try:
+        data   = request.get_json(force=True) or {}
+        prompt = _build_finance_prompt(data)
+        # the newest OpenAI model is "gpt-5" which was released August 7, 2025.
+        # do not change this unless explicitly requested by the user
+        client = OpenAI(
+            api_key  = os.environ.get('AI_INTEGRATIONS_OPENAI_API_KEY'),
+            base_url = os.environ.get('AI_INTEGRATIONS_OPENAI_BASE_URL'),
+        )
+        resp = client.chat.completions.create(
+            model    = _AI_MODEL,
+            messages = [
+                {'role': 'system', 'content': _INSIGHTS_SYSTEM},
+                {'role': 'user',   'content': prompt},
+            ],
+            response_format      = {'type': 'json_object'},
+            max_completion_tokens= 1024,
+        )
+        result = json.loads(resp.choices[0].message.content)
+        return jsonify(result)
+    except Exception as e:
+        err = str(e)
+        if 'FREE_CLOUD_BUDGET_EXCEEDED' in err:
+            return jsonify({'error': 'FREE_CLOUD_BUDGET_EXCEEDED'})
+        return jsonify({'error': err}), 500
 
 # ─── Frontend ─────────────────────────────────────────────────────────────────
 
