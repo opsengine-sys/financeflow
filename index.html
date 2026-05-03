@@ -247,19 +247,14 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
 .market-ticker-price{font-family:'Sora',sans-serif;font-size:.975rem;font-weight:700;color:var(--text)}
 .market-ticker-change{font-size:.75rem;font-weight:600;margin-top:.15rem}
 .market-ticker-change.up{color:var(--success)}.market-ticker-change.down{color:var(--danger)}
-.market-detail-card{margin-top:.75rem;background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius-md);padding:1rem}
+.market-detail-card{margin-top:.75rem;background:linear-gradient(135deg,rgba(4,120,87,.05),rgba(16,185,129,.02));border:1px solid rgba(4,120,87,.14);border-radius:var(--radius-md);padding:1rem}
 .market-detail-head{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start;flex-wrap:wrap;margin-bottom:.75rem}
 .market-detail-title{font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;color:var(--text)}
 .market-detail-sub{font-size:.78rem;color:var(--text-2);margin-top:.15rem}
 .market-detail-meta{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem}
 .market-detail-pill{display:inline-flex;align-items:center;gap:.3rem;background:rgba(255,255,255,.55);border:1px solid var(--border-light);border-radius:999px;padding:.25rem .65rem;font-size:.75rem;font-weight:600;color:var(--text-2)}
-.market-detail-chart{height:220px;width:100%;margin-top:.625rem;position:relative}
-.market-detail-chart svg{width:100%;height:100%;display:block;overflow:visible}
-.mkt-det-tip{position:absolute;pointer-events:none;background:rgba(15,23,42,.88);color:#fff;border-radius:8px;padding:.35rem .65rem;font-size:.76rem;font-family:'DM Sans',sans-serif;white-space:nowrap;opacity:0;transition:opacity .12s;z-index:10;transform:translate(-50%,-120%);line-height:1.6}
-.mkt-country-tabs{display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.75rem}
-.mkt-country-tab{padding:.3rem .72rem;border-radius:999px;border:1px solid var(--border);background:var(--bg-alt);font-size:.73rem;font-weight:600;cursor:pointer;color:var(--text-2);transition:all .15s;white-space:nowrap;font-family:'DM Sans',sans-serif}
-.mkt-country-tab:hover{border-color:var(--primary);color:var(--primary)}
-.mkt-country-tab.active{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(4,120,87,.25)}
+.market-detail-chart{height:140px;width:100%;margin-top:.4rem}
+.market-detail-chart svg{width:100%;height:100%;display:block}
 .market-live-dot{width:6px;height:6px;background:var(--success);border-radius:50%;display:inline-block;margin-right:.3rem;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
 /* Charts */
@@ -864,6 +859,7 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
               <div class="weather-loc" id="weatherLoc">Detecting</div>
             </div>
           </div>
+        </div>
       </div>
       <div class="page-header">
         <div><h1 class="header-title">Dashboard</h1><p class="header-subtitle" id="dashSubtitle">Your financial snapshot for May 2026.</p></div>
@@ -1019,15 +1015,6 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
             <button class="btn btn-ghost btn-sm" onclick="openTickerSelectModal()" title="Customize tickers">⚙ Tickers</button>
             <button class="btn btn-ghost btn-sm" onclick="fetchMarketData()" id="refreshMktBtn">↻ Refresh</button>
           </div>
-        </div>
-        <div class="mkt-country-tabs">
-          <button class="mkt-country-tab active" onclick="setMktCountry(this,'all')">🌐 All</button>
-          <button class="mkt-country-tab" onclick="setMktCountry(this,'india')">🇮🇳 India</button>
-          <button class="mkt-country-tab" onclick="setMktCountry(this,'usa')">🇺🇸 USA</button>
-          <button class="mkt-country-tab" onclick="setMktCountry(this,'europe')">🇪🇺 Europe</button>
-          <button class="mkt-country-tab" onclick="setMktCountry(this,'asia')">🌏 Asia</button>
-          <button class="mkt-country-tab" onclick="setMktCountry(this,'crypto')">₿ Crypto</button>
-          <button class="mkt-country-tab" onclick="setMktCountry(this,'commodity')">🏅 Comm.</button>
         </div>
         <div class="market-pulse" id="marketPulse">
           <div style="grid-column:1/-1;text-align:center;padding:.5rem;font-size:.85rem;color:var(--text-2);">Loading market data…</div>
@@ -1584,6 +1571,7 @@ function saveWeatherCity(){
 async function fetchWeather(){
   try{
     let lat,lon,locName;
+    // Priority: 1) Settings city  2) GPS  3) IP  4) Mumbai
     if(_weatherCity){
       try{
         const gc=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(_weatherCity)}&format=json&limit=1`);
@@ -1606,45 +1594,26 @@ async function fetchWeather(){
     document.getElementById('weatherIcon').textContent=icon;document.getElementById('weatherTemp').textContent=`${Math.round(d.current.temperature_2m)}°C`;document.getElementById('weatherCond').textContent=conds.join(' ');
     if(!locName){try{const gr=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(2)}&lon=${lon.toFixed(2)}&format=json`);const gd=await gr.json();locName=gd.address?.city||gd.address?.town||gd.address?.state||'Your location';}catch{locName='Your location';}}
     document.getElementById('weatherLoc').textContent=locName;
-  }catch{
-    document.getElementById('weatherIcon').textContent='🌤️';
-    document.getElementById('weatherTemp').textContent='—';
-    document.getElementById('weatherCond').textContent='Weather unavailable';
-    document.getElementById('weatherLoc').textContent='';
-  }
+  }catch{document.getElementById('weatherIcon').textContent='🌤️';document.getElementById('weatherTemp').textContent='—';document.getElementById('weatherCond').textContent='Weather unavailable';document.getElementById('weatherLoc').textContent='';}
 }
 
 /* ══ MARKET PULSE ══ */
 const marketItems=[
-  {id:'nifty50',  label:'Nifty 50',   price:24526.50, chg:0.82,  type:'index',    flag:'🇮🇳', region:'india'},
-  {id:'sensex',   label:'Sensex',     price:80432.10, chg:0.75,  type:'index',    flag:'🇮🇳', region:'india'},
-  {id:'niftybank',label:'Nifty Bank', price:51820.60, chg:-0.32, type:'index',    flag:'🇮🇳', region:'india'},
-  {id:'sp500',    label:'S&P 500',    price:5127.79,  chg:0.51,  type:'index',    flag:'🇺🇸', region:'usa'},
-  {id:'nasdaq',   label:'NASDAQ',     price:15927.40, chg:0.89,  type:'index',    flag:'🇺🇸', region:'usa'},
-  {id:'dowjones', label:'Dow Jones',  price:39127.50, chg:0.32,  type:'index',    flag:'🇺🇸', region:'usa'},
-  {id:'ftse',     label:'FTSE 100',   price:8312.40,  chg:0.31,  type:'index',    flag:'🇬🇧', region:'europe'},
-  {id:'dax',      label:'DAX',        price:18245.60, chg:0.48,  type:'index',    flag:'🇩🇪', region:'europe'},
-  {id:'cac40',    label:'CAC 40',     price:8072.10,  chg:0.27,  type:'index',    flag:'🇫🇷', region:'europe'},
-  {id:'nikkei',   label:'Nikkei 225', price:38480.50, chg:-0.55, type:'index',    flag:'🇯🇵', region:'asia'},
-  {id:'hangseng', label:'Hang Seng',  price:17852.30, chg:0.84,  type:'index',    flag:'🇭🇰', region:'asia'},
-  {id:'gold',     label:'Gold $/oz',  price:2346.40,  chg:0.23,  type:'commodity',flag:'🥇', region:'commodity'},
-  {id:'silver',   label:'Silver',     price:29.85,    chg:-0.18, type:'commodity',flag:'🥈', region:'commodity'},
-  {id:'crude',    label:'Crude Oil',  price:82.40,    chg:0.55,  type:'commodity',flag:'🛢️', region:'commodity'},
-  {id:'bitcoin',  label:'Bitcoin',    price:null,     chg:null,  type:'crypto',   flag:'₿',  region:'crypto'},
-  {id:'ethereum', label:'Ethereum',   price:null,     chg:null,  type:'crypto',   flag:'Ξ',  region:'crypto'}
+  {id:'nifty50',  label:'Nifty 50',   price:24526.50, chg:0.82,  type:'index',    flag:'🇮🇳'},
+  {id:'sensex',   label:'Sensex',     price:80432.10, chg:0.75,  type:'index',    flag:'🇮🇳'},
+  {id:'niftybank',label:'Nifty Bank', price:51820.60, chg:-0.32, type:'index',    flag:'🇮🇳'},
+  {id:'sp500',    label:'S&P 500',    price:5127.79,  chg:0.51,  type:'index',    flag:'🇺🇸'},
+  {id:'nasdaq',   label:'NASDAQ',     price:15927.40, chg:0.89,  type:'index',    flag:'🇺🇸'},
+  {id:'dowjones', label:'Dow Jones',  price:39127.50, chg:0.32,  type:'index',    flag:'🇺🇸'},
+  {id:'gold',     label:'Gold $/oz',  price:2346.40,  chg:0.23,  type:'commodity',flag:'🥇'},
+  {id:'silver',   label:'Silver',     price:29.85,    chg:-0.18, type:'commodity',flag:'🥈'},
+  {id:'crude',    label:'Crude Oil',  price:82.40,    chg:0.55,  type:'commodity',flag:'🛢️'},
+  {id:'bitcoin',  label:'Bitcoin',    price:null,     chg:null,  type:'crypto',   flag:'₿'},
+  {id:'ethereum', label:'Ethereum',   price:null,     chg:null,  type:'crypto',   flag:'Ξ'}
 ];
 let selectedTickers=new Set(['nifty50','sensex','sp500','nasdaq','gold','bitcoin','ethereum']);
 let _pendingTickers=null,_pendingStocks=null;
 let _marketDetailKey=null;
-let _mktCountryFilter='all';
-let _lastCryptoData=null;
-function setMktCountry(btn,region){
-  _mktCountryFilter=region;
-  document.querySelectorAll('.mkt-country-tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  _marketDetailKey=null;
-  renderMarketPulse(_lastCryptoData);
-}
 const stockCatalog=[
   {id:'RELIANCE.NS',label:'Reliance',flag:'🇮🇳',type:'stock'},
   {id:'TCS.NS',label:'TCS',flag:'🇮🇳',type:'stock'},
@@ -1669,23 +1638,11 @@ const stockCatalog=[
 let selectedStocks=new Set();
 let stockPrices={};
 function _marketSeriesFor(item){
-  /* Generate 24 synthetic intraday points from open→current */
-  const cur=item?.price||100;
-  const chg=Number(item?.chg||0);
-  const open=cur/(1+chg/100);
-  const n=24;
-  /* seed deterministic noise from item id */
-  let seed=item.id.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
-  function rng(){seed=(seed*1664525+1013904223)&0xffffffff;return(seed>>>0)/0xffffffff;}
-  const pts=[];
-  for(let i=0;i<n;i++){
-    const t=i/(n-1);
-    const trend=open+(cur-open)*t;
-    const noise=(rng()-0.5)*2*(Math.abs(cur-open)*0.4+Math.abs(cur)*0.002);
-    pts.push(Math.max(cur*0.01,trend+noise));
-  }
-  pts[n-1]=cur; /* pin end to current price */
-  return pts;
+  const base=item?.price||0;
+  const change=Number(item?.chg||0);
+  const trend=item?.type==='crypto'?1.3:1;
+  const points=[0.92,0.95,0.97,0.99,1,1+(change/100)*trend,1+(change/100)*trend*0.7];
+  return points.map((m,i)=>Math.max(0.1,base*m+(i===points.length-1?0:0)));
 }
 function renderMarketDetail(item){
   const title=document.getElementById('marketDetailTitle');
@@ -1693,74 +1650,26 @@ function renderMarketDetail(item){
   const meta=document.getElementById('marketDetailMeta');
   const chart=document.getElementById('marketDetailChart');
   if(!title||!sub||!meta||!chart||!item)return;
-  const isInr=item.type==='crypto'||(item.type==='index'&&item.flag==='🇮🇳')||(item.type==='stock'&&item.id.endsWith('.NS'));
+  const isInr=item.type==='crypto'||(item.type==='index'&&item.flag==='🇮🇳')||item.type==='stock'&&item.id.endsWith('.NS');
   const series=_marketSeriesFor(item);
-  const rawMin=Math.min(...series),rawMax=Math.max(...series);
-  const pad2=(rawMax-rawMin)*0.12;
-  const minV=rawMin-pad2,maxV=rawMax+pad2;
-  const w=chart.clientWidth||360,h=220;
-  const pL=56,pB=28,pT=14,pR=16;
-  const cw=w-pL-pR,ch=h-pB-pT;
-  const scaleY=ch/(maxV-minV);
-  const scaleX=cw/(series.length-1);
-  const px=(i)=>pL+i*scaleX;
-  const py=(v)=>pT+ch-(v-minV)*scaleY;
-  const isUp=(item.chg||0)>=0;
-  const lineCol=isUp?'#059669':'#ef4444';
-  const fillId='mdf'+item.id.replace(/[^a-z0-9]/gi,'');
-  /* Build path */
-  let linePath=series.map((v,i)=>`${i===0?'M':'L'} ${px(i).toFixed(1)} ${py(v).toFixed(1)}`).join(' ');
-  let fillPath=`M ${pL} ${py(minV)} ${linePath.slice(1)} L ${px(series.length-1)} ${py(minV)} Z`;
-  /* Grid lines + Y labels */
-  const gridCount=4;
-  let gridSvg='';
-  for(let i=0;i<=gridCount;i++){
-    const v=minV+(maxV-minV)*(i/gridCount);
-    const y=py(v);
-    gridSvg+=`<line x1="${pL}" y1="${y.toFixed(1)}" x2="${w-pR}" y2="${y.toFixed(1)}" stroke="var(--border)" stroke-width="1" stroke-dasharray="${i===0?'':'4,3'}" opacity=".6"/>`;
-    const label=isInr?(v>=100000?`₹${(v/100000).toFixed(1)}L`:(v>=1000?`₹${(v/1000).toFixed(1)}k`:`₹${Math.round(v)}`)):(v>=1000?`$${(v/1000).toFixed(1)}k`:`$${v.toFixed(v>100?0:2)}`);
-    gridSvg+=`<text x="${pL-6}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--text-3)" font-family="DM Sans">${label}</text>`;
-  }
-  /* X-axis time labels (market hours 9:30–15:30) */
-  const timeLabels=['9:30','10:45','12:00','13:15','14:30','15:30'];
-  let timeSvg='';
-  timeLabels.forEach((t,i)=>{
-    const idx=Math.round(i*(series.length-1)/(timeLabels.length-1));
-    timeSvg+=`<text x="${px(idx).toFixed(1)}" y="${h-8}" text-anchor="middle" font-size="9" fill="var(--text-3)" font-family="DM Sans">${t}</text>`;
-  });
-  /* Hover zone rects */
-  let hoverRects='';
-  series.forEach((v,i)=>{
-    const x=px(i),y=py(v);
-    const slotW=scaleX||8;
-    const label=isInr?(v>=1000?`₹${Math.round(v).toLocaleString('en-IN')}`:`₹${v.toFixed(2)}`):`$${v>=1000?(v/1000).toFixed(2)+'k':v.toFixed(2)}`;
-    hoverRects+=`<rect x="${(x-slotW/2).toFixed(1)}" y="${pT}" width="${slotW.toFixed(1)}" height="${ch}" fill="transparent" onmouseenter="mktTipShow(event,${x.toFixed(1)},${y.toFixed(1)},'${label}')" onmouseleave="mktTipHide()"/>`;
-  });
-  /* Current price dot */
-  const lastX=px(series.length-1),lastY=py(series[series.length-1]);
-  /* Path length for animation */
-  const pathLen=series.reduce((acc,v,i)=>{if(i===0)return 0;const dx=scaleX,dy=(series[i]-series[i-1])*scaleY;return acc+Math.sqrt(dx*dx+dy*dy);},0)*1.05;
-  const fmt=(v)=>isInr?`₹${Math.round(v).toLocaleString('en-IN')}`:(v>=1000?`$${(v/1000).toFixed(2)}k`:`$${v.toFixed(2)}`);
+  const min=Math.min(...series);
+  const max=Math.max(...series);
+  const width=chart.clientWidth||320;
+  const height=140;
+  const pad=14;
+  const innerW=width-pad*2;
+  const innerH=height-pad*2;
+  const range=Math.max(max-min,1);
+  const pts=series.map((v,i)=>`${pad+(innerW*(i/(series.length-1)))} ${pad+innerH-((v-min)/range)*innerH}`).join(' ');
+  const last=series[series.length-1];
+  const prev=series[series.length-2]||series[0];
+  const diff=last-prev;
+  const diffPct=prev?((diff/prev)*100):0;
+  const fmt=(v)=>isInr?`₹${Math.round(v).toLocaleString('en-IN')}`:`$${v.toFixed(2)}`;
   title.textContent=`${item.flag||''} ${item.label}`;
-  sub.textContent=`Today · ${item.type} · ${isUp?'▲':'▼'} ${Math.abs(item.chg||0).toFixed(2)}%`;
-  meta.innerHTML=`<span class="market-detail-pill" style="color:${isUp?'var(--success)':'var(--danger)'}">Current: ${fmt(item.price||0)}</span><span class="market-detail-pill">Open: ${fmt(series[0])}</span><span class="market-detail-pill">High: ${fmt(rawMax)}</span><span class="market-detail-pill">Low: ${fmt(rawMin)}</span>`;
-  chart.innerHTML=`
-  <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="overflow:visible;display:block">
-    <defs>
-      <linearGradient id="${fillId}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${lineCol}" stop-opacity=".28"/>
-        <stop offset="100%" stop-color="${lineCol}" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
-    ${gridSvg}
-    <path d="${fillPath}" fill="url(#${fillId})"/>
-    <path d="${linePath}" fill="none" stroke="${lineCol}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${pathLen}" style="animation:lineGrow .9s ease both"/>
-    <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="4.5" fill="${lineCol}" style="animation:fadeInUp .3s ease .85s both"/>
-    <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="8" fill="${lineCol}" opacity=".18" style="animation:fadeInUp .3s ease .85s both"/>
-    ${hoverRects}
-    ${timeSvg}
-  </svg>
-  <div class="mkt-det-tip" id="mktDetTip"></div>`;
+  sub.textContent=`Live snapshot · ${item.type} · ${diffPct>=0?'up':'down'} ${Math.abs(diffPct).toFixed(2)}% on the selected trend`;
+  meta.innerHTML=`<span class="market-detail-pill">Price: ${fmt(item.price||0)}</span><span class="market-detail-pill">Change: ${diffPct>=0?'▲':'▼'} ${Math.abs(item.chg||diffPct).toFixed(2)}%</span><span class="market-detail-pill">Range: ${fmt(min)}–${fmt(max)}</span>`;
+  chart.innerHTML=`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><defs><linearGradient id="mdg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(4,120,87,.35)"/><stop offset="100%" stop-color="rgba(4,120,87,0)"/></linearGradient></defs><path d="M ${pad} ${pad+innerH} ${pts.replace(/ /g,' L ')} L ${pad+innerW} ${pad+innerH} Z" fill="url(#mdg)"/><polyline points="${pts}" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 function selectMarketItem(kind,id){
   _marketDetailKey=`${kind}:${id}`;
@@ -1773,26 +1682,14 @@ function selectMarketItem(kind,id){
     renderMarketDetail({...item,...live});
   }
 }
-function mktTipShow(evt,x,y,label){
-  const tip=document.getElementById('mktDetTip');if(!tip)return;
-  const chart=document.getElementById('marketDetailChart');
-  const rect=chart.getBoundingClientRect();
-  const tx=evt.clientX-rect.left,ty=y;
-  tip.style.left=tx+'px';tip.style.top=ty+'px';
-  tip.textContent=label;tip.style.opacity='1';
-}
-function mktTipHide(){const tip=document.getElementById('mktDetTip');if(tip)tip.style.opacity='0';}
 function renderMarketPulse(cryptoData){
-  if(cryptoData)_lastCryptoData=cryptoData;
-  const all_visible=marketItems.filter(m=>selectedTickers.has(m.id));
-  /* Apply region filter — always show all in "all" mode, else filter by region */
-  const visible=_mktCountryFilter==='all'?all_visible:all_visible.filter(m=>m.region===_mktCountryFilter);
+  const visible=marketItems.filter(m=>selectedTickers.has(m.id));
   const items=visible.map(m=>{
-    if(m.type==='crypto'&&_lastCryptoData){
+    if(m.type==='crypto'&&cryptoData){
       const sym=m.id==='bitcoin'?'bitcoin':'ethereum';
-      if(_lastCryptoData[sym]){
-        m.price=_lastCryptoData[sym].inr;
-        if(_lastCryptoData[sym].change_24h!=null)m.chg=+_lastCryptoData[sym].change_24h.toFixed(2);
+      if(cryptoData[sym]){
+        m.price=cryptoData[sym].inr;
+        if(cryptoData[sym].change_24h!=null)m.chg=+cryptoData[sym].change_24h.toFixed(2);
       }
     }
     /* Non-crypto: price & chg already populated by Yahoo Finance via fetchMarketData() */
@@ -1801,24 +1698,19 @@ function renderMarketPulse(cryptoData){
     const pos=(m.chg||0)>=0;
     return`<div class="market-ticker ${_marketDetailKey===`ticker:${m.id}`?'active':''}" data-market-key="ticker:${m.id}" onclick="selectMarketItem('ticker','${m.id}')"><div class="market-ticker-name">${m.flag||''} ${m.label}</div><div class="market-ticker-price">${fmt||'—'}</div><div class="market-ticker-change ${pos?'up':'down'}">${pos?'▲':'▼'} ${Math.abs(m.chg||0).toFixed(2)}%</div></div>`;
   }).join('');
-  /* Stock items — only show in 'all', 'india' or 'usa' modes */
-  const showStocks=_mktCountryFilter==='all'||_mktCountryFilter==='india'||_mktCountryFilter==='usa';
-  const stockItems=showStocks?[...selectedStocks].map(sym=>{
+  const stockItems=[...selectedStocks].map(sym=>{
     const cat=stockCatalog.find(s=>s.id===sym);
     const data=stockPrices[sym];
     const name=cat?.label||sym.replace('.NS','');
     const flag=cat?.flag||'📈';
     const isInr=sym.endsWith('.NS');
-    /* Filter stocks by region tab */
-    if(_mktCountryFilter==='india'&&!isInr)return'';
-    if(_mktCountryFilter==='usa'&&isInr)return'';
     const price=data?.price;const chg=data?.chg;
     const fmt=price!=null?(isInr?`₹${price.toLocaleString('en-IN',{maximumFractionDigits:0})}`:`$${price.toFixed(2)}`):'—';
     const pos=(chg||0)>=0;
     return`<div class="market-ticker ${_marketDetailKey===`stock:${sym}`?'active':''}" data-market-key="stock:${sym}" onclick="selectMarketItem('stock','${sym}')"><div class="market-ticker-name">${flag} ${name}</div><div class="market-ticker-price">${fmt}</div><div class="market-ticker-change ${pos?'up':'down'}">${pos?'▲':'▼'} ${Math.abs(chg||0).toFixed(2)}%</div></div>`;
-  }).join(''):'';
-  const combined=items+stockItems;
-  document.getElementById('marketPulse').innerHTML=combined||`<div style="grid-column:1/-1;text-align:center;padding:.75rem;font-size:.85rem;color:var(--text-2);">No tickers for this region — add some via ⚙ Tickers</div>`;
+  }).join('');
+  const all=items+stockItems;
+  document.getElementById('marketPulse').innerHTML=all||'<div style="grid-column:1/-1;text-align:center;padding:.5rem;font-size:.85rem;color:var(--text-2);">No tickers selected</div>';
   if(!_marketDetailKey&&visible[0])selectMarketItem('ticker',visible[0].id);
   else if(_marketDetailKey){
     const [kind,id]=_marketDetailKey.split(':');
@@ -1838,7 +1730,7 @@ async function fetchStockPrices(){
 async function fetchMarketData(){
   const btn=document.getElementById('refreshMktBtn');if(btn)btn.textContent='↻ Loading…';
   // Fetch all index symbols via our proxy
-  const idxSymbols={nifty50:'^NSEI',sensex:'^BSESN',niftybank:'^NSEBANK',sp500:'^GSPC',nasdaq:'^IXIC',dowjones:'^DJI',gold:'GC=F',silver:'SI=F',crude:'CL=F',ftse:'^FTSE',dax:'^GDAXI',cac40:'^FCHI',nikkei:'^N225',hangseng:'^HSI'};
+  const idxSymbols={nifty50:'^NSEI',sensex:'^BSESN',niftybank:'^NSEBANK',sp500:'^GSPC',nasdaq:'^IXIC',dowjones:'^DJI',gold:'GC=F',silver:'SI=F',crude:'CL=F'};
   const cryptoIds={bitcoin:'BTC-USD',ethereum:'ETH-USD'};
   const allProxySyms=[...Object.values(idxSymbols),...Object.values(cryptoIds)].join(',');
   let liveData={};
