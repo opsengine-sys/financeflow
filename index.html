@@ -117,14 +117,14 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
 .btn-ghost:hover{background:var(--bg-alt);color:var(--primary)}
 .btn-sm{padding:.4rem .875rem;font-size:.8rem}
 /* Greeting */
-.greeting-card{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 60%,#059669 100%);border-radius:var(--radius-xl);padding:1.5rem 1.75rem;margin-bottom:1.25rem;color:#fff;position:relative;overflow:hidden}
-.greeting-card::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:rgba(255,255,255,.06);border-radius:50%}
-.greeting-card::after{content:'';position:absolute;bottom:-60px;left:30%;width:160px;height:160px;background:rgba(255,255,255,.04);border-radius:50%}
+.greeting-card{background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius-xl);padding:1.5rem 1.75rem;margin-bottom:1.25rem;color:var(--text);position:relative;overflow:hidden;box-shadow:var(--shadow-sm)}
+.greeting-card::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:rgba(4,120,87,.04);border-radius:50%}
+.greeting-card::after{content:'';position:absolute;bottom:-60px;left:30%;width:160px;height:160px;background:rgba(4,120,87,.03);border-radius:50%}
 .greeting-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem}
 .greeting-name{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:700;line-height:1.2}
 .greeting-sub{font-size:.88rem;opacity:.85;margin-top:.25rem}
 .greeting-fun{font-size:.82rem;opacity:.7;margin-top:.5rem;font-style:italic}
-.weather-widget{background:rgba(255,255,255,.15);border-radius:var(--radius-lg);padding:.75rem 1rem;display:flex;align-items:center;gap:.75rem;backdrop-filter:blur(4px);min-width:160px}
+.weather-widget{background:var(--bg-alt);border-radius:var(--radius-lg);padding:.75rem 1rem;display:flex;align-items:center;gap:.75rem;min-width:160px;border:1px solid var(--border-light)}
 .weather-icon{font-size:2rem;flex-shrink:0}
 .weather-temp{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:700;line-height:1}
 .weather-cond{font-size:.8rem;opacity:.85;margin-top:.2rem}
