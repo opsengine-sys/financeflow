@@ -247,7 +247,7 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
 .market-ticker-price{font-family:'Sora',sans-serif;font-size:.975rem;font-weight:700;color:var(--text)}
 .market-ticker-change{font-size:.75rem;font-weight:600;margin-top:.15rem}
 .market-ticker-change.up{color:var(--success)}.market-ticker-change.down{color:var(--danger)}
-.market-detail-card{margin-top:.75rem;background:linear-gradient(135deg,rgba(4,120,87,.05),rgba(16,185,129,.02));border:1px solid rgba(4,120,87,.14);border-radius:var(--radius-md);padding:1rem}
+.market-detail-card{margin-top:.75rem;background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius-md);padding:1rem}
 .market-detail-head{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start;flex-wrap:wrap;margin-bottom:.75rem}
 .market-detail-title{font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;color:var(--text)}
 .market-detail-sub{font-size:.78rem;color:var(--text-2);margin-top:.15rem}
@@ -262,24 +262,6 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
 .mkt-country-tab.active{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(4,120,87,.25)}
 .market-live-dot{width:6px;height:6px;background:var(--success);border-radius:50%;display:inline-block;margin-right:.3rem;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
-.weather-widget{cursor:pointer;transition:background .2s}
-.weather-widget:hover{background:rgba(255,255,255,.22)}
-.weather-expand-hint{font-size:.63rem;opacity:.5;margin-top:.25rem;letter-spacing:.02em}
-.weather-detail-panel{background:rgba(255,255,255,.1);backdrop-filter:blur(8px);border-radius:var(--radius-lg);padding:1rem 1.125rem;margin-top:.875rem;animation:fadeInUp .3s ease;border:1px solid rgba(255,255,255,.14)}
-.weather-stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:.5rem;margin-bottom:.875rem}
-.weather-stat{background:rgba(255,255,255,.12);border-radius:var(--radius-md);padding:.5rem .5rem;text-align:center;color:#fff}
-.weather-stat-icon{font-size:1rem;line-height:1}
-.weather-stat-label{font-size:.61rem;opacity:.6;text-transform:uppercase;letter-spacing:.03em;margin:.15rem 0}
-.weather-stat-val{font-size:.88rem;font-weight:700}
-.weather-forecast-label{font-size:.72rem;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.05em;color:#fff;margin-bottom:.5rem}
-.weather-forecast-row{display:flex;gap:.45rem;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:.25rem;scrollbar-width:none}
-.weather-forecast-row::-webkit-scrollbar{display:none}
-.weather-forecast-day{flex:0 0 auto;background:rgba(255,255,255,.1);border-radius:var(--radius-md);padding:.5rem .6rem;text-align:center;min-width:60px;color:#fff;border:1px solid rgba(255,255,255,.08)}
-.weather-forecast-day.today{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.3)}
-.weather-fc-label{font-size:.67rem;opacity:.7;font-weight:600;margin-bottom:.15rem}
-.weather-fc-icon{font-size:1.35rem;margin:.2rem 0}
-.weather-fc-hi{font-size:.82rem;font-weight:700}
-.weather-fc-lo{font-size:.72rem;opacity:.58}
 /* Charts */
 .chart-container{width:100%;position:relative;overflow:hidden}
 .chart-tooltip{position:absolute;background:var(--text);color:#fff;border-radius:var(--radius-sm);padding:.375rem .625rem;font-size:.78rem;font-weight:600;pointer-events:none;opacity:0;transition:opacity .15s;z-index:10;white-space:nowrap}
@@ -874,16 +856,14 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
             <div class="greeting-sub" id="greetingDate">Friday, 2 May 2026 · May is kind to your wallet!</div>
             <div class="greeting-fun" id="greetingFun">"A budget is telling your money where to go instead of wondering where it went."</div>
           </div>
-          <div class="weather-widget" id="weatherWidget" onclick="toggleWeatherDetail()">
+          <div class="weather-widget" id="weatherWidget">
             <div class="weather-icon" id="weatherIcon">🌤️</div>
             <div>
               <div class="weather-temp" id="weatherTemp">—°C</div>
               <div class="weather-cond" id="weatherCond">Loading…</div>
               <div class="weather-loc" id="weatherLoc">Detecting</div>
-              <div class="weather-expand-hint" id="weatherExpandHint">tap for forecast ▾</div>
             </div>
           </div>
-        <div id="weatherDetailPanel" style="display:none"></div>
       </div>
       <div class="page-header">
         <div><h1 class="header-title">Dashboard</h1><p class="header-subtitle" id="dashSubtitle">Your financial snapshot for May 2026.</p></div>
@@ -1601,8 +1581,6 @@ function saveWeatherCity(){
   toast('Weather location saved!');
   fetchWeather();
 }
-let _weatherDetailData=null;
-let _weatherDetailOpen=false;
 async function fetchWeather(){
   try{
     let lat,lon,locName;
@@ -1641,66 +1619,12 @@ async function fetchWeather(){
       catch{locName='Your location';}
     }
     document.getElementById('weatherLoc').textContent=locName;
-    _weatherDetailData={current:d.current,daily:d.daily,locName};
-    if(_weatherDetailOpen)renderWeatherDetailPanel();
   }catch{
     document.getElementById('weatherIcon').textContent='🌤️';
     document.getElementById('weatherTemp').textContent='—';
     document.getElementById('weatherCond').textContent='Weather unavailable';
     document.getElementById('weatherLoc').textContent='';
   }
-}
-function toggleWeatherDetail(){
-  _weatherDetailOpen=!_weatherDetailOpen;
-  const panel=document.getElementById('weatherDetailPanel');
-  const hint=document.getElementById('weatherExpandHint');
-  if(!panel)return;
-  if(_weatherDetailOpen){
-    panel.style.display='block';
-    if(hint)hint.textContent='tap to close ▴';
-    renderWeatherDetailPanel();
-  }else{
-    panel.style.display='none';
-    if(hint)hint.textContent='tap for forecast ▾';
-  }
-}
-function renderWeatherDetailPanel(){
-  const panel=document.getElementById('weatherDetailPanel');
-  if(!panel||!_weatherDetailOpen)return;
-  if(!_weatherDetailData){panel.innerHTML=`<div class="weather-detail-panel" style="color:#fff;text-align:center;padding:1rem;">Loading forecast…</div>`;return;}
-  const c=_weatherDetailData.current;
-  const daily=_weatherDetailData.daily;
-  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const uvLevel=(uv)=>uv<=2?'Low':uv<=5?'Moderate':uv<=7?'High':'Very High';
-  const visKm=c.visibility!=null?(c.visibility/1000).toFixed(1)+'km':'—';
-  const stats=[
-    {icon:'🌡️',label:'Feels Like',val:`${Math.round(c.apparent_temperature??c.temperature_2m)}°C`},
-    {icon:'💧',label:'Humidity',val:`${c.relative_humidity_2m??'—'}%`},
-    {icon:'💨',label:'Wind',val:`${Math.round(c.wind_speed_10m??0)} km/h`},
-    {icon:'🔵',label:'Pressure',val:`${Math.round(c.surface_pressure??0)} hPa`},
-    {icon:'🌞',label:'UV Index',val:`${c.uv_index??'—'} (${uvLevel(c.uv_index??0)})`},
-    {icon:'👁️',label:'Visibility',val:visKm},
-  ];
-  let forecastHTML='';
-  if(daily&&daily.time){
-    daily.time.forEach((dateStr,i)=>{
-      const d=new Date(dateStr);
-      const isToday=i===0;
-      const dayLabel=isToday?'Today':days[d.getDay()];
-      const wcode=daily.weather_code[i];
-      const wdesc=wcMap[wcode]||'🌡️ Weather';
-      const [icon2]=wdesc.split(' ');
-      const hi=Math.round(daily.temperature_2m_max[i]);
-      const lo=Math.round(daily.temperature_2m_min[i]);
-      const rain=daily.precipitation_sum[i]>0?`<div style="font-size:.62rem;opacity:.6;margin-top:.15rem">${daily.precipitation_sum[i].toFixed(1)}mm</div>`:'';
-      forecastHTML+=`<div class="weather-forecast-day${isToday?' today':''}"><div class="weather-fc-label">${dayLabel}</div><div class="weather-fc-icon">${icon2}</div><div class="weather-fc-hi">${hi}°</div><div class="weather-fc-lo">${lo}°</div>${rain}</div>`;
-    });
-  }
-  panel.innerHTML=`<div class="weather-detail-panel">
-    <div class="weather-stats-row">${stats.map(s=>`<div class="weather-stat"><div class="weather-stat-icon">${s.icon}</div><div class="weather-stat-label">${s.label}</div><div class="weather-stat-val">${s.val}</div></div>`).join('')}</div>
-    <div class="weather-forecast-label">7-Day Forecast</div>
-    <div class="weather-forecast-row">${forecastHTML||'<span style="opacity:.6;font-size:.8rem;color:#fff">Forecast unavailable</span>'}</div>
-  </div>`;
 }
 
 /* ══ MARKET PULSE ══ */
