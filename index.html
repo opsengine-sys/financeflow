@@ -1616,7 +1616,6 @@ const marketItems=[
 ];
 let selectedTickers=new Set(['nifty50','sensex','ftse100','dax','cac40','nikkei','hangseng','asx200','tsx','sp500','nasdaq','dowjones','gold','bitcoin','ethereum']);
 let _pendingTickers=null,_pendingStocks=null;
-let _marketDetailKey=null;
 const stockCatalog=[
   {id:'RELIANCE.NS',label:'Reliance',flag:'🇮🇳',type:'stock'},
   {id:'TCS.NS',label:'TCS',flag:'🇮🇳',type:'stock'},
@@ -1640,9 +1639,6 @@ const stockCatalog=[
 ];
 let selectedStocks=new Set();
 let stockPrices={};
-let _marketView='today';
-let _marketSelectedKind='ticker';
-let _marketSelectedId='nifty50';
 let _marketVisible='all';
 function _marketSeriesFor(item){
   const base=item?.price||0;
@@ -1658,62 +1654,9 @@ function _marketSeriesFor(item){
   const drift=change/100;
   return points.map((m,i)=>Math.max(0.1,base*m*(1+(Math.sin(i+1)*0.004*trend)+(drift*(i/(points.length-1))))));
 }
-function changeMarketView(view){
-  _marketView=view;
-  const item=_marketSelectedKind==='stock'?stockCatalog.find(x=>x.id===_marketSelectedId):marketItems.find(x=>x.id===_marketSelectedId);
-  if(item){
-    const live=_marketSelectedKind==='stock'?{...(stockPrices[_marketSelectedId]||{})}:{...item};
-    renderMarketDetail({...item,...live});
-  }
-}
 function applyMarketFilter(){
   _marketVisible=document.getElementById('marketFilterSelect')?.value||'all';
   renderMarketPulse();
-}
-function renderMarketDetail(item){
-  const title=document.getElementById('marketDetailTitle');
-  const sub=document.getElementById('marketDetailSub');
-  const meta=document.getElementById('marketDetailMeta');
-  const chart=document.getElementById('marketDetailChart');
-  if(!title||!sub||!meta||!chart||!item)return;
-  const isInr=item.type==='crypto'||(item.type==='index'&&item.flag==='🇮🇳')||item.type==='stock'&&item.id.endsWith('.NS');
-  const series=_marketSeriesFor(item);
-  const min=Math.min(...series);
-  const max=Math.max(...series);
-  const width=chart.clientWidth||320;
-  const height=176;
-  const pad=24;
-  const innerW=width-pad*2;
-  const innerH=height-pad*2;
-  const range=Math.max(max-min,1);
-  const pts=series.map((v,i)=>`${pad+(innerW*(i/(series.length-1)))} ${pad+innerH-((v-min)/range)*innerH}`).join(' ');
-  const last=series[series.length-1];
-  const prev=series[series.length-2]||series[0];
-  const diff=last-prev;
-  const diffPct=prev?((diff/prev)*100):0;
-  const fmt=(v)=>isInr?`₹${Math.round(v).toLocaleString('en-IN')}`:`$${v.toFixed(2)}`;
-  const open=series[0],high=max,low=min;
-  const vol=Math.max(0,Math.round(Math.abs(item.chg||diffPct)*1000000));
-  title.textContent=`${item.flag||''} ${item.label}`;
-  sub.textContent=`Live snapshot · ${item.type} · ${diffPct>=0?'up':'down'} ${Math.abs(diffPct).toFixed(2)}% · 1D market view`;
-  meta.innerHTML=`<span class="market-detail-pill">Open: ${fmt(open)}</span><span class="market-detail-pill">High: ${fmt(high)}</span><span class="market-detail-pill">Low: ${fmt(low)}</span><span class="market-detail-pill">Vol: ${vol.toLocaleString('en-IN')}</span>`;
-  const yTicks=[min,min+(range*.33),min+(range*.66),max];
-  const xLabels=_marketView==='today'?['09:30','11:00','12:30','14:00','15:30']:_marketView==='week'?['Mon','Tue','Wed','Thu','Fri']:_marketView==='month'?['W1','W2','W3','W4']:_marketView==='year'?['Jan','Apr','Jul','Oct','Dec']:[];
-  const xTicks=xLabels.map((l,i)=>({x:pad+(innerW*(i/(Math.max(xLabels.length-1,1)))),label:l}));
-  chart.innerHTML=`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="overflow:hidden;display:block;max-width:100%"><defs><linearGradient id="mdg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(4,120,87,.38)"/><stop offset="100%" stop-color="rgba(4,120,87,0)"/></linearGradient><linearGradient id="gridFade" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(148,163,184,.10)"/><stop offset="100%" stop-color="rgba(148,163,184,.03)"/></linearGradient></defs><rect x="0" y="0" width="${width}" height="${height}" rx="16" fill="url(#gridFade)"/>${yTicks.map(v=>{const y=pad+innerH-((v-min)/range)*innerH;return`<line x1="${pad}" y1="${y}" x2="${width-pad}" y2="${y}" stroke="var(--border)" stroke-width="1" opacity=".5"/><text x="${pad-10}" y="${y+3}" text-anchor="end" font-size="9.5" fill="var(--text-3)" font-family="DM Sans">${fmt(v)}</text>`;}).join('')}${xTicks.map(t=>`<line x1="${t.x}" y1="${height-pad}" x2="${t.x}" y2="${height-pad+5}" stroke="var(--border)" stroke-width="1" opacity=".55"/><text x="${t.x}" y="${height-6}" text-anchor="middle" font-size="9.5" fill="var(--text-3)" font-family="DM Sans">${t.label}</text>`).join('')}<path d="M ${pts.replace(/ /g,' L ')}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M ${pad} ${pad+innerH} ${pts.replace(/ /g,' L ')} L ${pad+innerW} ${pad+innerH} Z" fill="url(#mdg)"/><circle cx="${pad+innerW}" cy="${pad+innerH-((last-min)/range)*innerH}" r="4.5" fill="var(--primary)"/></svg>`;
-}
-function selectMarketItem(kind,id){
-  _marketDetailKey=`${kind}:${id}`;
-  _marketSelectedKind=kind;
-  _marketSelectedId=id;
-  document.querySelectorAll('.market-ticker').forEach(el=>el.classList.remove('active'));
-  const active=document.querySelector(`[data-market-key="${_marketDetailKey}"]`);
-  if(active)active.classList.add('active');
-  const item=kind==='ticker'?marketItems.find(x=>x.id===id):stockCatalog.find(x=>x.id===id);
-  if(item){
-    const live=kind==='stock'?stockPrices[id]:marketItems.find(x=>x.id===id);
-    renderMarketDetail({...item,...live});
-  }
 }
 function renderMarketPulse(cryptoData){
   const visible=marketItems.filter(m=>selectedTickers.has(m.id)).filter(m=>_marketVisible==='all'||m.type===_marketVisible||(_marketVisible==='equities'&&m.type==='stock'));
@@ -1729,7 +1672,7 @@ function renderMarketPulse(cryptoData){
     const isInr=m.type==='crypto'||(m.type==='index'&&m.flag==='🇮🇳');
     const fmt=m.id==='bitcoin'||m.id==='ethereum'?`₹${Math.round((m.price||0)/1000)}K`:isInr?m.price?.toLocaleString('en-IN',{maximumFractionDigits:0}):`$${m.price?.toFixed(m.type==='commodity'&&m.id==='silver'?2:0)||'—'}`;
     const pos=(m.chg||0)>=0;
-    return`<div class="market-ticker ${_marketDetailKey===`ticker:${m.id}`?'active':''}" data-market-key="ticker:${m.id}" onclick="selectMarketItem('ticker','${m.id}')"><div class="market-ticker-name">${m.flag||''} ${m.label}</div><div class="market-ticker-price">${fmt||'—'}</div><div class="market-ticker-change ${pos?'up':'down'}">${pos?'▲':'▼'} ${Math.abs(m.chg||0).toFixed(2)}%</div></div>`;
+    return`<div class="market-ticker"><div class="market-ticker-name">${m.flag||''} ${m.label}</div><div class="market-ticker-price">${fmt||'—'}</div><div class="market-ticker-change ${pos?'up':'down'}">${pos?'▲':'▼'} ${Math.abs(m.chg||0).toFixed(2)}%</div></div>`;
   }).join('');
   const stockItems=[...selectedStocks].map(sym=>{
     const cat=stockCatalog.find(s=>s.id===sym);
@@ -1740,31 +1683,11 @@ function renderMarketPulse(cryptoData){
     const price=data?.price;const chg=data?.chg;
     const fmt=price!=null?(isInr?`₹${price.toLocaleString('en-IN',{maximumFractionDigits:0})}`:`$${price.toFixed(2)}`):'—';
     const pos=(chg||0)>=0;
-    return`<div class="market-ticker ${_marketDetailKey===`stock:${sym}`?'active':''}" data-market-key="stock:${sym}" onclick="selectMarketItem('stock','${sym}')"><div class="market-ticker-name">${flag} ${name}</div><div class="market-ticker-price">${fmt}</div><div class="market-ticker-change ${pos?'up':'down'}">${pos?'▲':'▼'} ${Math.abs(chg||0).toFixed(2)}%</div></div>`;
+    return`<div class="market-ticker"><div class="market-ticker-name">${flag} ${name}</div><div class="market-ticker-price">${fmt}</div><div class="market-ticker-change ${pos?'up':'down'}">${pos?'▲':'▼'} ${Math.abs(chg||0).toFixed(2)}%</div></div>`;
   }).join('');
   const all=items+stockItems;
   const pulse=document.getElementById('marketPulse');
   if(pulse)pulse.innerHTML=all||'<div style="grid-column:1/-1;text-align:center;padding:.5rem;font-size:.85rem;color:var(--text-2);">No tickers selected</div>';
-  if(!visible.length){
-    _marketDetailKey=null;
-    const title=document.getElementById('marketDetailTitle');
-    const sub=document.getElementById('marketDetailSub');
-    const meta=document.getElementById('marketDetailMeta');
-    const chart=document.getElementById('marketDetailChart');
-    if(title)title.textContent='No tickers in this filter';
-    if(sub)sub.textContent='Choose a different market group.';
-    if(meta)meta.innerHTML='';
-    if(chart)chart.innerHTML='';
-    return;
-  }
-  if(!_marketDetailKey||!visible.some(v=>`${(_marketSelectedKind==='stock'?'stock':'ticker')}:${(_marketSelectedKind==='stock'?_marketSelectedId:_marketSelectedId)}`===_marketDetailKey)){
-    selectMarketItem('ticker',visible[0].id);
-  }
-  else if(_marketDetailKey){
-    const [kind,id]=_marketDetailKey.split(':');
-    const current=kind==='stock'?{...(stockCatalog.find(x=>x.id===id)||{}),...(stockPrices[id]||{})}:(marketItems.find(x=>x.id===id)||{});
-    renderMarketDetail(current);
-  }
 }
 async function fetchStockPrices(){
   if(!selectedStocks.size)return;
