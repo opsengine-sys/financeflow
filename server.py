@@ -6,7 +6,6 @@ from flask_cors import CORS
 import sqlite3, jwt, bcrypt, uuid, json, os, requests
 from datetime import datetime, timedelta
 from functools import wraps
-from openai import OpenAI
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app, supports_credentials=True)
@@ -878,20 +877,12 @@ def market_crypto():
 
 # ─── AI Insights ──────────────────────────────────────────────────────────────
 
-# the newest OpenAI model is "gpt-5" which was released August 7, 2025.
-# do not change this unless explicitly requested by the user
-_AI_MODEL = 'gpt-5-mini'
-
 _INSIGHTS_SYSTEM = (
     'You are a personal finance advisor AI for an Indian user. '
-    'Given their monthly financial summary, return ONLY a JSON object with this exact shape:\n'
-    '{"summary":"<2-3 sentence HTML paragraph using <strong> for key numbers/terms>","insights":[{"icon":"emoji","text":"<HTML sentence with <strong> for key figures>"},...]}\n'
-    'Rules:\n'
-    '- insights: 4-5 items, each with a relevant emoji and one concise actionable sentence\n'
-    '- Use ₹ symbol for amounts. Prefer lakhs notation (e.g. ₹1.2L) for large amounts\n'
-    '- summary: cover overall financial health, biggest concern, and one positive observation\n'
-    '- Be specific, direct and encouraging. No generic filler.\n'
-    '- Return ONLY valid JSON, no markdown fences or extra text.'
+    'Return ONLY valid JSON with this shape: '
+    '{"summary":"<2-3 sentence HTML paragraph using <strong> for key numbers/terms>","insights":[{"icon":"emoji","text":"<HTML sentence with <strong> for key figures>"},...]} '
+    'Rules: 4-5 insights, relevant emoji, one concise actionable sentence each, use ₹ symbol, prefer lakhs notation for large amounts, '
+    'cover overall financial health, biggest concern, and one positive observation.'
 )
 
 def _build_finance_prompt(data):
@@ -952,28 +943,61 @@ def _build_finance_prompt(data):
         f"Generate personalised financial insights for this data."
     )
 
+def _format_inr(value):
+    value = float(value or 0)
+    if abs(value) >= 100000:
+        return f"₹{value/100000:.1f}L"
+    if abs(value) >= 1000:
+        return f"₹{value:,.0f}"
+    return f"₹{value:.0f}"
+
+def _rule_based_ai_insights(data):
+    txns = data.get('transactions', [])
+    budgets = data.get('budgets', [])
+    goals = data.get('goals', [])
+    subscriptions = data.get('subscriptions', [])
+    banks = data.get('banks', [])
+    cards = data.get('cards', [])
+    expenses = [t for t in txns if t.get('type') == 'expense']
+    income = sum(t.get('amount', 0) for t in txns if t.get('type') == 'income')
+    total_exp = sum(t.get('amount', 0) for t in expenses)
+    savings = income - total_exp
+    sav_rate = round((savings / income) * 100, 1) if income else 0
+    by_cat = {}
+    for t in expenses:
+        by_cat[t.get('category', 'Other')] = by_cat.get(t.get('category', 'Other'), 0) + t.get('amount', 0)
+    top_cat, top_amt = max(by_cat.items(), key=lambda x: x[1]) if by_cat else ('Spending', 0)
+    over = [b for b in budgets if b.get('limit', 0) and (b.get('spent', 0) / b.get('limit', 1)) >= 0.9]
+    top_goal = max(goals, key=lambda g: (g.get('saved', 0) / g.get('target', 1)) if g.get('target', 0) else 0, default=None)
+    top_goal_pct = round((top_goal.get('saved', 0) / top_goal.get('target', 1)) * 100) if top_goal else 0
+    sub_monthly = sum(
+        s.get('amount', 0) if s.get('cycle') == 'Monthly' else
+        s.get('amount', 0) / 12 if s.get('cycle') == 'Yearly' else
+        s.get('amount', 0) / 3 if s.get('cycle') == 'Quarterly' else 0
+        for s in subscriptions
+    )
+    bank_total = sum(b.get('balance', 0) for b in banks)
+    debt_total = sum(c.get('outstanding', 0) for c in cards)
+    summary = (
+        f"In <strong>{datetime.now().strftime('%B %Y')}</strong>, you earned <strong>{_format_inr(income)}</strong> and spent <strong>{_format_inr(total_exp)}</strong>. "
+        f"That leaves <strong>{_format_inr(savings)}</strong> in savings, a <strong>{sav_rate:.1f}%</strong> rate."
+    )
+    insights = [
+        {'icon': '💸', 'text': f"<strong>{top_cat}</strong> is your biggest expense area at <strong>{_format_inr(top_amt)}</strong>."},
+        {'icon': '🎯', 'text': f"You have <strong>{len(over)}</strong> budget{'' if len(over)==1 else 's'} near the ceiling."},
+        {'icon': '🏆', 'text': f"Your top goal, <strong>{top_goal.get('name')}</strong>, is <strong>{top_goal_pct}%</strong> complete."} if top_goal else None,
+        {'icon': '🔄', 'text': f"Recurring subscriptions cost about <strong>{_format_inr(sub_monthly)}/mo</strong>."} if sub_monthly else None,
+        {'icon': '🏦', 'text': f"Net liquid position is <strong>{_format_inr(bank_total - debt_total)}</strong>."} if (bank_total or debt_total) else None,
+    ]
+    insights = [i for i in insights if i]
+    return {'summary': summary, 'insights': insights[:5]}
+
 @app.route('/api/ai/insights', methods=['POST'])
 def ai_insights():
-    """Generate AI-powered financial insights via Replit AI Integrations (OpenAI)."""
+    """Generate AI-powered financial insights using a local rule-based/open-source fallback path."""
     try:
         data   = request.get_json(force=True) or {}
-        prompt = _build_finance_prompt(data)
-        # the newest OpenAI model is "gpt-5" which was released August 7, 2025.
-        # do not change this unless explicitly requested by the user
-        client = OpenAI(
-            api_key  = os.environ.get('AI_INTEGRATIONS_OPENAI_API_KEY'),
-            base_url = os.environ.get('AI_INTEGRATIONS_OPENAI_BASE_URL'),
-        )
-        resp = client.chat.completions.create(
-            model    = _AI_MODEL,
-            messages = [
-                {'role': 'system', 'content': _INSIGHTS_SYSTEM},
-                {'role': 'user',   'content': prompt},
-            ],
-            response_format      = {'type': 'json_object'},
-            max_completion_tokens= 1024,
-        )
-        result = json.loads(resp.choices[0].message.content)
+        result = _rule_based_ai_insights(data)
         return jsonify(result)
     except Exception as e:
         err = str(e)
