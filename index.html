@@ -238,7 +238,7 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
 .invest-return{font-size:.76rem;font-weight:600;margin-top:.15rem}
 .invest-return.pos{color:var(--success)}.invest-return.neg{color:var(--danger)}
 /* Market pulse */
-.market-pulse{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin-bottom:1rem}
+.market-pulse{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem}
 .market-ticker{background:var(--bg-alt);border-radius:var(--radius-md);padding:.75rem .875rem;border:1px solid var(--border-light);transition:all .2s;position:relative;overflow:hidden}
 .market-ticker:hover{border-color:var(--primary);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
 .market-ticker.active{border-color:var(--primary);box-shadow:0 0 0 2px rgba(4,120,87,.12);background:rgba(4,120,87,.04)}
@@ -551,7 +551,7 @@ img,canvas{max-width:100%}
   .greeting-fun{display:none}
   .weather-widget{width:100%;min-width:0;box-sizing:border-box}
   /* Market pulse — 3 columns */
-  .market-pulse{grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+  .market-pulse{gap:.45rem}
   .market-ticker{padding:.625rem .75rem}
   .market-ticker-price{font-size:.875rem}
   .market-ticker-name{font-size:.68rem}
@@ -602,7 +602,7 @@ img,canvas{max-width:100%}
   /* Header */
   .header-title{font-size:1.2rem}
   /* Market — 2 columns */
-  .market-pulse{grid-template-columns:repeat(1,minmax(0,1fr));gap:.5rem}
+  .market-pulse{gap:.45rem}
   .market-detail-head{align-items:flex-start}
   .market-detail-chart{height:180px}
   .market-ticker{padding:.5rem .625rem}
