@@ -1588,10 +1588,13 @@ async function fetchWeather(){
         catch{lat=19.076;lon=72.877;locName='Mumbai';}
       }
     }
-    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(2)}&longitude=${lon.toFixed(2)}&current=temperature_2m,weather_code&timezone=auto`);
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(2)}&longitude=${lon.toFixed(2)}&current=temperature_2m,weather_code,us_aqi&timezone=auto`);
     const d=await r.json();
     const wc=d.current.weather_code;const desc=wcMap[wc]||'🌡️ Weather';const[icon,...conds]=desc.split(' ');
-    document.getElementById('weatherIcon').textContent=icon;document.getElementById('weatherTemp').textContent=`${Math.round(d.current.temperature_2m)}°C`;document.getElementById('weatherCond').textContent=conds.join(' ');
+    const aqi=d.current.us_aqi;
+    const aqiLabel=aqi==null?'AQI —':aqi<=50?'AQI Good':aqi<=100?'AQI Moderate':aqi<=150?'AQI Unhealthy for Sensitive Groups':aqi<=200?'AQI Unhealthy':aqi<=300?'AQI Very Unhealthy':'AQI Hazardous';
+    const weatherText=conds.join(' ');
+    document.getElementById('weatherIcon').textContent=icon;document.getElementById('weatherTemp').textContent=`${Math.round(d.current.temperature_2m)}°C`;document.getElementById('weatherCond').textContent=`${weatherText} · ${aqiLabel}${aqi==null?'':` (${aqi})`}`;
     if(!locName){try{const gr=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(2)}&lon=${lon.toFixed(2)}&format=json`);const gd=await gr.json();locName=gd.address?.city||gd.address?.town||gd.address?.state||'Your location';}catch{locName='Your location';}}
     document.getElementById('weatherLoc').textContent=locName;
   }catch{document.getElementById('weatherIcon').textContent='🌤️';document.getElementById('weatherTemp').textContent='—';document.getElementById('weatherCond').textContent='Weather unavailable';document.getElementById('weatherLoc').textContent='';}
@@ -1640,9 +1643,10 @@ let stockPrices={};
 function _marketSeriesFor(item){
   const base=item?.price||0;
   const change=Number(item?.chg||0);
-  const trend=item?.type==='crypto'?1.3:1;
-  const points=[0.92,0.95,0.97,0.99,1,1+(change/100)*trend,1+(change/100)*trend*0.7];
-  return points.map((m,i)=>Math.max(0.1,base*m+(i===points.length-1?0:0)));
+  const trend=item?.type==='crypto'?1.7:item?.type==='stock'?1.35:1.1;
+  const drift=change/100;
+  const points=[0.985,0.972,0.996,0.988,1.008,1+drift*0.55,1+drift*0.9,1+drift*0.7,1+drift*1.05,1+drift*0.95];
+  return points.map((m,i)=>Math.max(0.1,base*m*(1+(Math.sin(i+1)*0.006*trend))));
 }
 function renderMarketDetail(item){
   const title=document.getElementById('marketDetailTitle');
@@ -1655,8 +1659,8 @@ function renderMarketDetail(item){
   const min=Math.min(...series);
   const max=Math.max(...series);
   const width=chart.clientWidth||320;
-  const height=140;
-  const pad=14;
+  const height=176;
+  const pad=16;
   const innerW=width-pad*2;
   const innerH=height-pad*2;
   const range=Math.max(max-min,1);
@@ -1666,10 +1670,12 @@ function renderMarketDetail(item){
   const diff=last-prev;
   const diffPct=prev?((diff/prev)*100):0;
   const fmt=(v)=>isInr?`₹${Math.round(v).toLocaleString('en-IN')}`:`$${v.toFixed(2)}`;
+  const open=series[0],high=max,low=min;
+  const vol=Math.max(0,Math.round(Math.abs(item.chg||diffPct)*1000000));
   title.textContent=`${item.flag||''} ${item.label}`;
-  sub.textContent=`Live snapshot · ${item.type} · ${diffPct>=0?'up':'down'} ${Math.abs(diffPct).toFixed(2)}% on the selected trend`;
-  meta.innerHTML=`<span class="market-detail-pill">Price: ${fmt(item.price||0)}</span><span class="market-detail-pill">Change: ${diffPct>=0?'▲':'▼'} ${Math.abs(item.chg||diffPct).toFixed(2)}%</span><span class="market-detail-pill">Range: ${fmt(min)}–${fmt(max)}</span>`;
-  chart.innerHTML=`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><defs><linearGradient id="mdg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(4,120,87,.35)"/><stop offset="100%" stop-color="rgba(4,120,87,0)"/></linearGradient></defs><path d="M ${pad} ${pad+innerH} ${pts.replace(/ /g,' L ')} L ${pad+innerW} ${pad+innerH} Z" fill="url(#mdg)"/><polyline points="${pts}" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  sub.textContent=`Live snapshot · ${item.type} · ${diffPct>=0?'up':'down'} ${Math.abs(diffPct).toFixed(2)}% · 1D market view`;
+  meta.innerHTML=`<span class="market-detail-pill">Open: ${fmt(open)}</span><span class="market-detail-pill">High: ${fmt(high)}</span><span class="market-detail-pill">Low: ${fmt(low)}</span><span class="market-detail-pill">Vol: ${vol.toLocaleString('en-IN')}</span>`;
+  chart.innerHTML=`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><defs><linearGradient id="mdg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(4,120,87,.38)"/><stop offset="100%" stop-color="rgba(4,120,87,0)"/></linearGradient><linearGradient id="gridFade" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(148,163,184,.10)"/><stop offset="100%" stop-color="rgba(148,163,184,.03)"/></linearGradient></defs><rect x="0" y="0" width="${width}" height="${height}" rx="16" fill="url(#gridFade)"/>${[0.25,0.5,0.75].map(p=>`<line x1="${pad}" y1="${pad+innerH*p}" x2="${width-pad}" y2="${pad+innerH*p}" stroke="var(--border)" stroke-width="1" stroke-dasharray="4 4" opacity=".7"/>`).join('')}<path d="M ${pad} ${pad+innerH} ${pts.replace(/ /g,' L ')} L ${pad+innerW} ${pad+innerH} Z" fill="url(#mdg)"/><polyline points="${pts}" fill="none" stroke="var(--primary)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${pad+(innerW*(series.length-1)/(series.length-1))}" cy="${pad+innerH-((last-min)/range)*innerH}" r="4.5" fill="var(--primary)"/><text x="${width-pad}" y="${18}" text-anchor="end" font-size="11" fill="var(--text-2)" font-family="DM Sans">1D</text></svg>`;
 }
 function selectMarketItem(kind,id){
   _marketDetailKey=`${kind}:${id}`;
