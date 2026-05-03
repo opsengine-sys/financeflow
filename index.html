@@ -1025,8 +1025,16 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
               <div class="market-detail-title" id="marketDetailTitle">Tap a ticker to view details</div>
               <div class="market-detail-sub" id="marketDetailSub">See a quick trend view, price range, and source-backed live stats.</div>
             </div>
-            <div class="market-detail-meta" id="marketDetailMeta"></div>
+            <div>
+              <select id="marketViewSelect" onchange="changeMarketView(this.value)" style="padding:.45rem .7rem;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font-size:.8rem;">
+                <option value="today">Today</option>
+                <option value="week">1W</option>
+                <option value="month">1M</option>
+                <option value="year">1Y</option>
+              </select>
+            </div>
           </div>
+          <div class="market-detail-meta" id="marketDetailMeta"></div>
           <div class="market-detail-chart" id="marketDetailChart"></div>
         </div>
         <p style="font-size:.72rem;color:var(--text-3);margin-top:.25rem;">Crypto via CoinGecko · indices and stocks via Yahoo Finance · commodities via Yahoo Finance futures.</p>
@@ -1640,14 +1648,22 @@ const stockCatalog=[
 ];
 let selectedStocks=new Set();
 let stockPrices={};
+let _marketView='today';
 function _marketSeriesFor(item){
   const base=item?.price||0;
   const change=Number(item?.chg||0);
-  const trend=item?.type==='crypto'?1.7:item?.type==='stock'?1.35:1.1;
+  const map={
+    today:[0.995,0.989,0.993,0.991,0.998,1.004,1.002,1.008,1.006,1.011],
+    week:[0.965,0.978,0.99,0.984,1.0,1.012,1.006,1.018,1.023,1.015],
+    month:[0.92,0.94,0.955,0.971,0.989,1.0,1.013,1.02,1.034,1.048],
+    year:[0.78,0.82,0.85,0.9,0.94,0.99,1.05,1.1,1.15,1.22]
+  };
+  const points=map[_marketView]||map.today;
+  const trend=item?.type==='crypto'?1.12:item?.type==='stock'?1.08:1.04;
   const drift=change/100;
-  const points=[0.985,0.972,0.996,0.988,1.008,1+drift*0.55,1+drift*0.9,1+drift*0.7,1+drift*1.05,1+drift*0.95];
-  return points.map((m,i)=>Math.max(0.1,base*m*(1+(Math.sin(i+1)*0.006*trend))));
+  return points.map((m,i)=>Math.max(0.1,base*m*(1+(Math.sin(i+1)*0.004*trend)+(drift*(i/(points.length-1))))));
 }
+function changeMarketView(view){_marketView=view;const active=_marketDetailKey?document.querySelector(`[data-market-key="${_marketDetailKey}"]`):null;if(active)active.click();}
 function renderMarketDetail(item){
   const title=document.getElementById('marketDetailTitle');
   const sub=document.getElementById('marketDetailSub');
@@ -1660,7 +1676,7 @@ function renderMarketDetail(item){
   const max=Math.max(...series);
   const width=chart.clientWidth||320;
   const height=176;
-  const pad=16;
+  const pad=24;
   const innerW=width-pad*2;
   const innerH=height-pad*2;
   const range=Math.max(max-min,1);
@@ -1675,7 +1691,9 @@ function renderMarketDetail(item){
   title.textContent=`${item.flag||''} ${item.label}`;
   sub.textContent=`Live snapshot · ${item.type} · ${diffPct>=0?'up':'down'} ${Math.abs(diffPct).toFixed(2)}% · 1D market view`;
   meta.innerHTML=`<span class="market-detail-pill">Open: ${fmt(open)}</span><span class="market-detail-pill">High: ${fmt(high)}</span><span class="market-detail-pill">Low: ${fmt(low)}</span><span class="market-detail-pill">Vol: ${vol.toLocaleString('en-IN')}</span>`;
-  chart.innerHTML=`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><defs><linearGradient id="mdg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(4,120,87,.38)"/><stop offset="100%" stop-color="rgba(4,120,87,0)"/></linearGradient><linearGradient id="gridFade" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(148,163,184,.10)"/><stop offset="100%" stop-color="rgba(148,163,184,.03)"/></linearGradient></defs><rect x="0" y="0" width="${width}" height="${height}" rx="16" fill="url(#gridFade)"/>${[0.25,0.5,0.75].map(p=>`<line x1="${pad}" y1="${pad+innerH*p}" x2="${width-pad}" y2="${pad+innerH*p}" stroke="var(--border)" stroke-width="1" stroke-dasharray="4 4" opacity=".7"/>`).join('')}<path d="M ${pad} ${pad+innerH} ${pts.replace(/ /g,' L ')} L ${pad+innerW} ${pad+innerH} Z" fill="url(#mdg)"/><polyline points="${pts}" fill="none" stroke="var(--primary)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${pad+(innerW*(series.length-1)/(series.length-1))}" cy="${pad+innerH-((last-min)/range)*innerH}" r="4.5" fill="var(--primary)"/><text x="${width-pad}" y="${18}" text-anchor="end" font-size="11" fill="var(--text-2)" font-family="DM Sans">1D</text></svg>`;
+  const yTicks=[min,min+(range*.33),min+(range*.66),max];
+  const xLabels=_marketView==='today'?['09:30','11:00','12:30','14:00','15:30']:_marketView==='week'?['Mon','Tue','Wed','Thu','Fri']:_marketView==='month'?['W1','W2','W3','W4']:_marketView==='year'?['Jan','Apr','Jul','Oct','Dec']:[];
+  chart.innerHTML=`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><defs><linearGradient id="mdg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(4,120,87,.38)"/><stop offset="100%" stop-color="rgba(4,120,87,0)"/></linearGradient><linearGradient id="gridFade" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(148,163,184,.10)"/><stop offset="100%" stop-color="rgba(148,163,184,.03)"/></linearGradient></defs><rect x="0" y="0" width="${width}" height="${height}" rx="16" fill="url(#gridFade)"/>${yTicks.map(v=>{const y=pad+innerH-((v-min)/range)*innerH;return`<line x1="${pad}" y1="${y}" x2="${width-pad}" y2="${y}" stroke="var(--border)" stroke-width="1" stroke-dasharray="4 4" opacity=".7"/><text x="${pad-6}" y="${y+4}" text-anchor="end" font-size="10" fill="var(--text-3)" font-family="DM Sans">${fmt(v)}</text>`;}).join('')}${xLabels.map((l,i)=>{const x=pad+(innerW*(i/(Math.max(xLabels.length-1,1))));return`<text x="${x}" y="${height-6}" text-anchor="middle" font-size="10" fill="var(--text-3)" font-family="DM Sans">${l}</text>`;}).join('')}<path d="M ${pad} ${pad+innerH} ${pts.replace(/ /g,' L ')} L ${pad+innerW} ${pad+innerH} Z" fill="url(#mdg)"/><path d="M ${pts.replace(/ /g,' L ')}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${pad+(innerW*(series.length-1)/(series.length-1))}" cy="${pad+innerH-((last-min)/range)*innerH}" r="4.5" fill="var(--primary)"/></svg>`;
 }
 function selectMarketItem(kind,id){
   _marketDetailKey=`${kind}:${id}`;
