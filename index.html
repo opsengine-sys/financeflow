@@ -768,7 +768,7 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
       <p class="login-subtitle" id="authSubtitle">Sign in to your FinanceFlow account</p>
     </div>
     <!-- Clerk UI mounts here when configured -->
-    <div id="clerkMount" style="display:none;"></div>
+    <div id="clerkMount" style="display:none;width:100%;min-height:420px;"></div>
     <!-- Traditional email/password auth (fallback / when Clerk not configured) -->
     <div id="traditionalAuth">
       <div class="auth-tabs">
@@ -995,6 +995,58 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
       <div class="page-header"><div><h1 class="header-title">Bank Accounts</h1></div><button class="btn btn-primary" onclick="showUpdateBalancesModal()">↻ Update Balances</button></div>
       <div class="tip-banner"><div class="tip-banner-icon">💡</div><div><div class="tip-banner-title">Keep Balances Updated</div><div class="tip-banner-text">Click "Update Balances" to refresh. Manage accounts in Settings → Payment Methods.</div></div></div>
       <div class="card"><div id="banksList"></div></div>
+    </div>
+
+    <!-- Investments -->
+    <div id="investmentsPage" class="page hidden">
+      <div class="page-header">
+        <div><h1 class="header-title">Investments</h1><p class="header-subtitle">Track your portfolio and market pulse</p></div>
+        <div class="header-actions">
+          <select class="period-select" id="investCountry" onchange="renderInvestments()">
+            <option value="all">All</option>
+            <option value="india">India</option>
+            <option value="international">International</option>
+          </select>
+          <button class="btn btn-primary" onclick="showAddInvestmentModal()">+ Add Investment</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><span class="market-live-dot"></span>Market Pulse</h2>
+          <div style="display:flex;gap:.375rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+            <select id="marketFilterSelect" onchange="applyMarketFilter()" style="padding:.45rem .7rem;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font-size:.8rem;max-width:100%;">
+              <option value="all">All</option>
+              <option value="index">Indices</option>
+              <option value="commodity">Commodities</option>
+              <option value="crypto">Crypto</option>
+              <option value="stock">Stocks</option>
+              <option value="equities">Equities</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="openTickerSelectModal()" title="Customize tickers">⚙ Tickers</button>
+            <button class="btn btn-ghost btn-sm" onclick="fetchMarketData()" id="refreshMktBtn">↻ Refresh</button>
+          </div>
+        </div>
+        <div class="market-pulse" id="marketPulse"><div style="grid-column:1/-1;text-align:center;padding:.5rem;font-size:.85rem;color:var(--text-2);">Loading market data…</div></div>
+        <div class="market-detail-card" id="marketDetailCard">
+          <div class="market-detail-head">
+            <div>
+              <div class="market-detail-title" id="marketDetailTitle">Tap a ticker to view details</div>
+              <div class="market-detail-sub" id="marketDetailSub">See a quick trend view, price range, and source-backed live stats.</div>
+            </div>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end;">
+              <select id="marketViewSelect" onchange="changeMarketView(this.value)" style="padding:.45rem .7rem;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font-size:.8rem;max-width:100%;">
+                <option value="today">Today</option>
+                <option value="week">1W</option>
+                <option value="month">1M</option>
+                <option value="year">1Y</option>
+              </select>
+            </div>
+          </div>
+          <div class="market-detail-meta" id="marketDetailMeta"></div>
+          <div class="market-detail-chart" id="marketDetailChart"></div>
+        </div>
+      </div>
+      <div class="card"><div id="investmentsList"></div></div>
     </div>
 
     <!-- Reports -->
@@ -1327,6 +1379,22 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
     <div class="form-group"><label class="form-label">Bio</label><textarea class="form-textarea" id="profileBio" style="min-height:70px;"></textarea></div>
     <button class="btn btn-primary" style="width:100%;justify-content:center;padding:.875rem;" onclick="saveProfile()">Save Profile</button>
   </div></div>
+</div>
+
+<!-- Add Investment -->
+<div id="addInvestmentModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header"><h2 class="modal-title">Add Investment</h2><button class="modal-close" onclick="closeModal('addInvestmentModal')">×</button></div>
+    <form class="modal-body" id="investmentForm">
+      <div class="form-group"><label class="form-label">Country</label><select class="form-select" id="investCountryForm" onchange="updateInvestTypeDropdown()"><option value="india">India</option><option value="international">International</option></select></div>
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="investType"></select></div>
+      <div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="investName"></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Invested Amount</label><input type="number" class="form-input" id="investAmount"></div><div class="form-group"><label class="form-label">Current Value</label><input type="number" class="form-input" id="investCurrentVal"></div></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="investStartDate"></div><div class="form-group"><label class="form-label">Platform</label><input type="text" class="form-input" id="investPlatform"></div></div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="investNotes"></textarea></div>
+      <button class="btn btn-primary" type="submit">Save Investment</button>
+    </form>
+  </div>
 </div>
 
 <!-- Security -->
@@ -1693,7 +1761,8 @@ function renderMarketPulse(cryptoData){
     return`<div class="market-ticker ${_marketDetailKey===`stock:${sym}`?'active':''}" data-market-key="stock:${sym}" onclick="selectMarketItem('stock','${sym}')"><div class="market-ticker-name">${flag} ${name}</div><div class="market-ticker-price">${fmt}</div><div class="market-ticker-change ${pos?'up':'down'}">${pos?'▲':'▼'} ${Math.abs(chg||0).toFixed(2)}%</div></div>`;
   }).join('');
   const all=items+stockItems;
-  document.getElementById('marketPulse').innerHTML=all||'<div style="grid-column:1/-1;text-align:center;padding:.5rem;font-size:.85rem;color:var(--text-2);">No tickers selected</div>';
+  const pulse=document.getElementById('marketPulse');
+  if(pulse)pulse.innerHTML=all||'<div style="grid-column:1/-1;text-align:center;padding:.5rem;font-size:.85rem;color:var(--text-2);">No tickers selected</div>';
   if(!visible.length){
     _marketDetailKey=null;
     const title=document.getElementById('marketDetailTitle');
@@ -1728,7 +1797,7 @@ async function fetchStockPrices(){
 async function fetchMarketData(){
   const btn=document.getElementById('refreshMktBtn');if(btn)btn.textContent='↻ Loading…';
   // Fetch all index symbols via our proxy
-  const idxSymbols={nifty50:'^NSEI',sensex:'^BSESN',niftybank:'^NSEBANK',sp500:'^GSPC',nasdaq:'^IXIC',dowjones:'^DJI',gold:'GC=F',silver:'SI=F',crude:'CL=F'};
+  const idxSymbols={nifty50:'^NSEI',sensex:'^BSESN',niftybank:'^NSEBANK',sp500:'^GSPC',nasdaq:'^IXIC',dowjones:'^DJI',ftse100:'^FTSE',dax:'^GDAXI',cac40:'^FCHI',nikkei:'^N225',hangseng:'^HSI',asx200:'^AXJO',tsx:'^GSPTSE',gold:'GC=F',silver:'SI=F',crude:'CL=F'};
   const cryptoIds={bitcoin:'BTC-USD',ethereum:'ETH-USD'};
   const allProxySyms=[...Object.values(idxSymbols),...Object.values(cryptoIds)].join(',');
   let liveData={};
@@ -2360,13 +2429,17 @@ function openNotificationsModal(){
 /* ══ PILL TOGGLES ══ */
 function setupPillToggles(){
   const txPill=document.getElementById('transactionTypePill'),txModal=document.getElementById('transactionModal'),txBadge=document.getElementById('txTypeBadge'),exGrp=document.getElementById('expenseCategories'),inGrp=document.getElementById('incomeCategories');
-  txPill.querySelectorAll('.pill-option').forEach(opt=>{opt.addEventListener('click',()=>{const type=opt.dataset.type;txPill.querySelectorAll('.pill-option').forEach(o=>o.classList.remove('active'));opt.classList.add('active');txPill.className=`pill-toggle ${type}-mode`;txModal.className=`modal ${type}-mode`;txBadge.textContent=type==='expense'?'Expense':'Income';exGrp.style.display=type==='expense'?'':'none';inGrp.style.display=type==='income'?'':'none';});});
+  if(txPill&&txModal&&txBadge&&exGrp&&inGrp) txPill.querySelectorAll('.pill-option').forEach(opt=>{opt.addEventListener('click',()=>{const type=opt.dataset.type;txPill.querySelectorAll('.pill-option').forEach(o=>o.classList.remove('active'));opt.classList.add('active');txPill.className=`pill-toggle ${type}-mode`;txModal.className=`modal ${type}-mode`;txBadge.textContent=type==='expense'?'Expense':'Income';exGrp.style.display=type==='expense'?'':'none';inGrp.style.display=type==='income'?'':'none';});});
   const lPill=document.getElementById('lendingTypePill'),lModal=document.getElementById('lendingModal'),lBadge=document.getElementById('lendTypeBadge'),pLabel=document.getElementById('personLabel');
-  lPill.querySelectorAll('.pill-option').forEach(opt=>{opt.addEventListener('click',()=>{const type=opt.dataset.type;lPill.querySelectorAll('.pill-option').forEach(o=>o.classList.remove('active'));opt.classList.add('active');lPill.className=`pill-toggle ${type}-mode`;lModal.className=`modal ${type}-mode`;lBadge.textContent=type==='lending'?'Lending':'Borrowing';pLabel.textContent=type==='lending'?'Person Name (Lent To)':'Person Name (Borrowed From)';});});
-  document.getElementById('subscriptionService').addEventListener('change',function(){document.getElementById('customServiceGroup').classList.toggle('hidden',this.value!=='Custom Service');});
-  document.getElementById('cardType').addEventListener('change',function(){document.getElementById('creditLimitGroup').style.display=this.value==='Credit Card'?'':'none';});
-  document.getElementById('editCardType').addEventListener('change',function(){document.getElementById('editCreditLimitGroup').style.display=this.value==='Credit Card'?'':'none';});
-  document.getElementById('investCountryForm').addEventListener('change',updateInvestTypeDropdown);
+  if(lPill&&lModal&&lBadge&&pLabel) lPill.querySelectorAll('.pill-option').forEach(opt=>{opt.addEventListener('click',()=>{const type=opt.dataset.type;lPill.querySelectorAll('.pill-option').forEach(o=>o.classList.remove('active'));opt.classList.add('active');lPill.className=`pill-toggle ${type}-mode`;lModal.className=`modal ${type}-mode`;lBadge.textContent=type==='lending'?'Lending':'Borrowing';pLabel.textContent=type==='lending'?'Person Name (Lent To)':'Person Name (Borrowed From)';});});
+  const subscriptionService=document.getElementById('subscriptionService');
+  if(subscriptionService) subscriptionService.addEventListener('change',function(){const g=document.getElementById('customServiceGroup');if(g)g.classList.toggle('hidden',this.value!=='Custom Service');});
+  const cardType=document.getElementById('cardType');
+  if(cardType) cardType.addEventListener('change',function(){const g=document.getElementById('creditLimitGroup');if(g)g.style.display=this.value==='Credit Card'?'':'none';});
+  const editCardType=document.getElementById('editCardType');
+  if(editCardType) editCardType.addEventListener('change',function(){const g=document.getElementById('editCreditLimitGroup');if(g)g.style.display=this.value==='Credit Card'?'':'none';});
+  const investCountryForm=document.getElementById('investCountryForm');
+  if(investCountryForm) investCountryForm.addEventListener('change',updateInvestTypeDropdown);
 }
 
 /* ══ FORM HANDLERS ══ */
@@ -2420,6 +2493,16 @@ function setupFormHandlers(){
     demoGoals.push(g);
     if(_authToken)apiSaveGoal(g);
     toast('Goal created!');closeModal('addGoalModal');this.reset();navigateTo('goals');updateNotifBadge();
+  });
+  document.getElementById('investmentForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    const invested=parseFloat(document.getElementById('investAmount').value);
+    const currentVal=parseFloat(document.getElementById('investCurrentVal').value);
+    if(!invested||!currentVal){toast('Enter valid investment values.','error');return;}
+    const i={id:Date.now(),country:document.getElementById('investCountryForm').value,type:document.getElementById('investType').value,name:document.getElementById('investName').value,invested,currentVal,startDate:document.getElementById('investStartDate').value,platform:document.getElementById('investPlatform').value,notes:document.getElementById('investNotes').value};
+    demoInvestments.push(i);
+    if(_authToken)apiSaveInvestment(i);
+    toast('Investment added!');closeModal('addInvestmentModal');this.reset();renderInvestments();
   });
 }
 
