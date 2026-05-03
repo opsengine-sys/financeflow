@@ -239,7 +239,7 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
 .invest-return{font-size:.76rem;font-weight:600;margin-top:.15rem}
 .invest-return.pos{color:var(--success)}.invest-return.neg{color:var(--danger)}
 /* Market pulse */
-.market-pulse{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.625rem;margin-bottom:1rem}
+.market-pulse{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.75rem;margin-bottom:1rem}
 .market-ticker{background:var(--bg-alt);border-radius:var(--radius-md);padding:.75rem .875rem;border:1px solid var(--border-light);transition:all .2s;position:relative;overflow:hidden}
 .market-ticker:hover{border-color:var(--primary);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
 .market-ticker.active{border-color:var(--primary);box-shadow:0 0 0 2px rgba(4,120,87,.12);background:rgba(4,120,87,.04)}
@@ -247,13 +247,13 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
 .market-ticker-price{font-family:'Sora',sans-serif;font-size:.975rem;font-weight:700;color:var(--text)}
 .market-ticker-change{font-size:.75rem;font-weight:600;margin-top:.15rem}
 .market-ticker-change.up{color:var(--success)}.market-ticker-change.down{color:var(--danger)}
-.market-detail-card{margin-top:.75rem;background:linear-gradient(135deg,rgba(4,120,87,.05),rgba(16,185,129,.02));border:1px solid rgba(4,120,87,.14);border-radius:var(--radius-md);padding:1rem}
-.market-detail-head{display:flex;justify-content:space-between;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:.875rem}
-.market-detail-title{font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;color:var(--text)}
-.market-detail-sub{font-size:.78rem;color:var(--text-2);margin-top:.15rem}
+.market-detail-card{margin-top:.75rem;background:linear-gradient(135deg,rgba(4,120,87,.05),rgba(16,185,129,.02));border:1px solid rgba(4,120,87,.14);border-radius:var(--radius-md);padding:clamp(.85rem,2vw,1rem)}
+.market-detail-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap;margin-bottom:.875rem}
+.market-detail-title{font-family:'Sora',sans-serif;font-size:clamp(.95rem,2vw,1.05rem);font-weight:700;color:var(--text);line-height:1.2}
+.market-detail-sub{font-size:clamp(.72rem,1.6vw,.8rem);color:var(--text-2);margin-top:.2rem;line-height:1.35}
 .market-detail-meta{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem;align-items:center}
-.market-detail-pill{display:inline-flex;align-items:center;gap:.3rem;background:rgba(255,255,255,.55);border:1px solid var(--border-light);border-radius:999px;padding:.25rem .65rem;font-size:.75rem;font-weight:600;color:var(--text-2)}
-.market-detail-chart{height:190px;width:100%;margin-top:.65rem;padding:.1rem 0 0;overflow:hidden}
+.market-detail-pill{display:inline-flex;align-items:center;gap:.3rem;background:rgba(255,255,255,.55);border:1px solid var(--border-light);border-radius:999px;padding:.3rem .6rem;font-size:clamp(.68rem,1.5vw,.75rem);font-weight:600;color:var(--text-2);white-space:nowrap}
+.market-detail-chart{height:clamp(170px,26vw,240px);width:100%;margin-top:.65rem;padding:.1rem 0 0;overflow:hidden;min-width:0}
 .market-detail-chart svg{width:100%;height:100%;display:block;overflow:hidden}
 .market-live-dot{width:6px;height:6px;background:var(--success);border-radius:50%;display:inline-block;margin-right:.3rem;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
@@ -550,7 +550,7 @@ img,canvas{max-width:100%}
   .greeting-fun{display:none}
   .weather-widget{width:100%;min-width:0;box-sizing:border-box}
   /* Market pulse — 3 columns */
-  .market-pulse{grid-template-columns:repeat(3,1fr);gap:.5rem}
+  .market-pulse{grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
   .market-ticker{padding:.625rem .75rem}
   .market-ticker-price{font-size:.875rem}
   .market-ticker-name{font-size:.68rem}
@@ -601,7 +601,9 @@ img,canvas{max-width:100%}
   /* Header */
   .header-title{font-size:1.2rem}
   /* Market — 2 columns */
-  .market-pulse{grid-template-columns:repeat(2,1fr);gap:.375rem}
+  .market-pulse{grid-template-columns:repeat(1,minmax(0,1fr));gap:.5rem}
+  .market-detail-head{align-items:flex-start}
+  .market-detail-chart{height:180px}
   .market-ticker{padding:.5rem .625rem}
   .market-ticker-price{font-size:.82rem}
   /* Transaction filter — horizontal scroll, no wrap */
@@ -1011,7 +1013,15 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
       <div class="card" style="margin-bottom:.875rem;">
         <div class="card-header">
           <h2 class="card-title"><span class="market-live-dot"></span>Market Pulse</h2>
-          <div style="display:flex;gap:.375rem;align-items:center;">
+          <div style="display:flex;gap:.375rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+            <select id="marketFilterSelect" onchange="applyMarketFilter()" style="padding:.45rem .7rem;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font-size:.8rem;max-width:100%;">
+              <option value="all">All</option>
+              <option value="index">Indices</option>
+              <option value="commodity">Commodities</option>
+              <option value="crypto">Crypto</option>
+              <option value="stock">Stocks</option>
+              <option value="equities">Equities</option>
+            </select>
             <button class="btn btn-ghost btn-sm" onclick="openTickerSelectModal()" title="Customize tickers">⚙ Tickers</button>
             <button class="btn btn-ghost btn-sm" onclick="fetchMarketData()" id="refreshMktBtn">↻ Refresh</button>
           </div>
@@ -1025,8 +1035,8 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
               <div class="market-detail-title" id="marketDetailTitle">Tap a ticker to view details</div>
               <div class="market-detail-sub" id="marketDetailSub">See a quick trend view, price range, and source-backed live stats.</div>
             </div>
-            <div>
-              <select id="marketViewSelect" onchange="changeMarketView(this.value)" style="padding:.45rem .7rem;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font-size:.8rem;">
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end;">
+              <select id="marketViewSelect" onchange="changeMarketView(this.value)" style="padding:.45rem .7rem;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font-size:.8rem;max-width:100%;">
                 <option value="today">Today</option>
                 <option value="week">1W</option>
                 <option value="month">1M</option>
@@ -1651,6 +1661,7 @@ let stockPrices={};
 let _marketView='today';
 let _marketSelectedKind='ticker';
 let _marketSelectedId='nifty50';
+let _marketVisible='all';
 function _marketSeriesFor(item){
   const base=item?.price||0;
   const change=Number(item?.chg||0);
@@ -1671,6 +1682,22 @@ function changeMarketView(view){
   if(item){
     const live=_marketSelectedKind==='stock'?{...(stockPrices[_marketSelectedId]||{})}:{...item};
     renderMarketDetail({...item,...live});
+  }
+}
+function applyMarketFilter(){
+  const filter=document.getElementById('marketFilterSelect')?.value||'all';
+  _marketVisible=filter;
+  const visible=marketItems.filter(m=>selectedTickers.has(m.id)).filter(m=>filter==='all'||m.type===filter|| (filter==='crypto'&&m.type==='crypto') || (filter==='equities'&&m.type==='stock'));
+  const first=visible[0];
+  if(first)selectMarketItem('ticker',first.id);
+  else{
+    _marketDetailKey=null;
+    const chart=document.getElementById('marketDetailChart');
+    if(chart)chart.innerHTML='';
+    const title=document.getElementById('marketDetailTitle');
+    const sub=document.getElementById('marketDetailSub');
+    if(title)title.textContent='No tickers in this filter';
+    if(sub)sub.textContent='Choose a different market group.';
   }
 }
 function renderMarketDetail(item){
@@ -1703,7 +1730,7 @@ function renderMarketDetail(item){
   const yTicks=[min,min+(range*.33),min+(range*.66),max];
   const xLabels=_marketView==='today'?['09:30','11:00','12:30','14:00','15:30']:_marketView==='week'?['Mon','Tue','Wed','Thu','Fri']:_marketView==='month'?['W1','W2','W3','W4']:_marketView==='year'?['Jan','Apr','Jul','Oct','Dec']:[];
   const xTicks=xLabels.map((l,i)=>({x:pad+(innerW*(i/(Math.max(xLabels.length-1,1)))),label:l}));
-  chart.innerHTML=`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="overflow:hidden;display:block"><defs><linearGradient id="mdg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(4,120,87,.38)"/><stop offset="100%" stop-color="rgba(4,120,87,0)"/></linearGradient><linearGradient id="gridFade" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(148,163,184,.10)"/><stop offset="100%" stop-color="rgba(148,163,184,.03)"/></linearGradient></defs><rect x="0" y="0" width="${width}" height="${height}" rx="16" fill="url(#gridFade)"/>${yTicks.map(v=>{const y=pad+innerH-((v-min)/range)*innerH;return`<line x1="${pad}" y1="${y}" x2="${width-pad}" y2="${y}" stroke="var(--border)" stroke-width="1" stroke-dasharray="4 4" opacity=".7"/><text x="${pad-8}" y="${y+4}" text-anchor="end" font-size="10" fill="var(--text-3)" font-family="DM Sans">${fmt(v)}</text>`;}).join('')}${xTicks.map(t=>`<line x1="${t.x}" y1="${height-pad}" x2="${t.x}" y2="${height-pad+6}" stroke="var(--border)" stroke-width="1"/><text x="${t.x}" y="${height-6}" text-anchor="middle" font-size="10" fill="var(--text-3)" font-family="DM Sans">${t.label}</text>`).join('')}<path d="M ${pts.replace(/ /g,' L ')}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M ${pad} ${pad+innerH} ${pts.replace(/ /g,' L ')} L ${pad+innerW} ${pad+innerH} Z" fill="url(#mdg)"/><circle cx="${pad+innerW}" cy="${pad+innerH-((last-min)/range)*innerH}" r="4.5" fill="var(--primary)"/></svg>`;
+  chart.innerHTML=`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="overflow:hidden;display:block;max-width:100%"><defs><linearGradient id="mdg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(4,120,87,.38)"/><stop offset="100%" stop-color="rgba(4,120,87,0)"/></linearGradient><linearGradient id="gridFade" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(148,163,184,.10)"/><stop offset="100%" stop-color="rgba(148,163,184,.03)"/></linearGradient></defs><rect x="0" y="0" width="${width}" height="${height}" rx="16" fill="url(#gridFade)"/>${yTicks.map(v=>{const y=pad+innerH-((v-min)/range)*innerH;return`<line x1="${pad}" y1="${y}" x2="${width-pad}" y2="${y}" stroke="var(--border)" stroke-width="1" stroke-dasharray="4 4" opacity=".7"/><text x="${pad-8}" y="${y+4}" text-anchor="end" font-size="10" fill="var(--text-3)" font-family="DM Sans">${fmt(v)}</text>`;}).join('')}${xTicks.map(t=>`<line x1="${t.x}" y1="${height-pad}" x2="${t.x}" y2="${height-pad+6}" stroke="var(--border)" stroke-width="1"/><text x="${t.x}" y="${height-6}" text-anchor="middle" font-size="10" fill="var(--text-3)" font-family="DM Sans">${t.label}</text>`).join('')}<path d="M ${pts.replace(/ /g,' L ')}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M ${pad} ${pad+innerH} ${pts.replace(/ /g,' L ')} L ${pad+innerW} ${pad+innerH} Z" fill="url(#mdg)"/><circle cx="${pad+innerW}" cy="${pad+innerH-((last-min)/range)*innerH}" r="4.5" fill="var(--primary)"/></svg>`;
 }
 function selectMarketItem(kind,id){
   _marketDetailKey=`${kind}:${id}`;
@@ -1719,7 +1746,7 @@ function selectMarketItem(kind,id){
   }
 }
 function renderMarketPulse(cryptoData){
-  const visible=marketItems.filter(m=>selectedTickers.has(m.id));
+  const visible=marketItems.filter(m=>selectedTickers.has(m.id)).filter(m=>_marketVisible==='all'||m.type===_marketVisible||(_marketVisible==='equities'&&m.type==='stock'));
   const items=visible.map(m=>{
     if(m.type==='crypto'&&cryptoData){
       const sym=m.id==='bitcoin'?'bitcoin':'ethereum';
