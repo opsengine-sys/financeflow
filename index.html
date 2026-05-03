@@ -84,7 +84,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
 .mobile-topbar-logo{font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;flex:1}
 .mobile-topbar-actions{display:flex;align-items:center;gap:.375rem}
 /* Sidebar */
-.sidebar{width:260px;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 1rem;position:fixed;height:100vh;overflow-y:auto;z-index:150;transition:transform .3s ease,background .3s}
+.sidebar{width:260px;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 1rem;position:fixed;height:100vh;height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;z-index:150;transition:transform .3s ease,background .3s}
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:140;backdrop-filter:blur(2px)}
 .sidebar-overlay.active{display:block}
 .logo{display:flex;align-items:center;gap:.75rem;margin-bottom:2rem;padding:.25rem .5rem}
@@ -497,7 +497,7 @@ img,canvas{max-width:100%}
 
 /* ≤1024px — tablet/mobile: sidebar collapses, topbar + bottom-nav appear */
 @media(max-width:1024px){
-  .sidebar{transform:translateX(-100%);padding-top:calc(var(--topbar-h) + 1rem)}
+  .sidebar{transform:translateX(-100%);padding-top:calc(var(--topbar-h) + 1rem);padding-bottom:5rem}
   .sidebar.mobile-visible{transform:translateX(0)}
   .main-content{margin-left:0;padding:calc(var(--topbar-h) + 1.25rem) 1.25rem 6.5rem}
   .mobile-topbar{display:flex}
@@ -632,6 +632,14 @@ img,canvas{max-width:100%}
   /* Bottom nav tighter */
   .bottom-nav-link{font-size:.58rem}
 }
+/* ── Pull-to-Refresh ── */
+.ptr-bar{position:fixed;top:var(--topbar-h);left:0;right:0;height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--surface);border-bottom:1px solid var(--border-light);z-index:190;transition:height .22s ease;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.ptr-bar.ptr-open{height:46px}
+.ptr-bar-inner{display:flex;align-items:center;gap:.5rem;font-size:.8rem;font-weight:600;color:var(--text-3)}
+.ptr-ring{width:18px;height:18px;border:2.5px solid var(--border);border-top-color:var(--primary);border-radius:50%;flex-shrink:0;transition:border-color .2s}
+.ptr-ring.ptr-ready{border-top-color:var(--accent)}
+@keyframes ptrSpin{to{transform:rotate(360deg)}}
+.ptr-ring.ptr-spinning{animation:ptrSpin .65s linear infinite}
 .hidden{display:none!important}
 /* ── Onboarding ── */
 .onboarding-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#f0fdf4,#ecfdf5,#f0fdf4);z-index:10000;display:flex;align-items:center;justify-content:center;padding:1.5rem;overflow-y:auto;}
@@ -823,6 +831,7 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
   </aside>
 
   <main class="main-content" id="mainContent">
+    <div class="ptr-bar" id="ptrBar"><div class="ptr-bar-inner"><div class="ptr-ring" id="ptrRing"></div><span id="ptrText">Pull to refresh</span></div></div>
 
     <!-- Dashboard -->
     <div id="dashboardPage" class="page">
@@ -1613,11 +1622,12 @@ function renderMarketPulse(cryptoData){
   const items=visible.map(m=>{
     if(m.type==='crypto'&&cryptoData){
       const sym=m.id==='bitcoin'?'bitcoin':'ethereum';
-      if(cryptoData[sym]){m.price=cryptoData[sym].inr;if(m.chg===null)m.chg=+(Math.random()*4-2).toFixed(2);}
-    } else if(m.type!=='crypto'){
-      m.price=m.price*(1+(Math.random()*.003-.0015));
-      m.chg=+(Math.random()*2-1).toFixed(2);
+      if(cryptoData[sym]){
+        m.price=cryptoData[sym].inr;
+        if(cryptoData[sym].change_24h!=null)m.chg=+cryptoData[sym].change_24h.toFixed(2);
+      }
     }
+    /* Non-crypto: price & chg already populated by Yahoo Finance via fetchMarketData() */
     const isInr=m.type==='crypto'||(m.type==='index'&&m.flag==='🇮🇳');
     const fmt=m.id==='bitcoin'||m.id==='ethereum'?`₹${Math.round((m.price||0)/1000)}K`:isInr?m.price?.toLocaleString('en-IN',{maximumFractionDigits:0}):`$${m.price?.toFixed(m.type==='commodity'&&m.id==='silver'?2:0)||'—'}`;
     const pos=(m.chg||0)>=0;
@@ -3204,6 +3214,79 @@ document.addEventListener('DOMContentLoaded',async()=>{
     document.getElementById(id)?.addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
   });
 });
+
+/* ══ PULL-TO-REFRESH ══ */
+(function(){
+  var _ptY=0,_ptDy=0,_ptLive=false,_ptDone=false,_ptTimer=null;
+  var THRESH=72;
+
+  function _mobile(){return window.innerWidth<=1024;}
+  function _bar(){return document.getElementById('ptrBar');}
+  function _ring(){return document.getElementById('ptrRing');}
+  function _txt(){return document.getElementById('ptrText');}
+
+  function _reset(){
+    var b=_bar();if(b)b.classList.remove('ptr-open');
+    var r=_ring();if(r){r.classList.remove('ptr-ready','ptr-spinning');}
+    var t=_txt();if(t)t.textContent='Pull to refresh';
+    _ptLive=false;_ptDone=false;
+  }
+
+  function _doRefresh(){
+    var r=_ring();if(r){r.classList.remove('ptr-ready');r.classList.add('ptr-spinning');}
+    var t=_txt();if(t)t.textContent='Refreshing…';
+    /* Re-render the active page */
+    var pg=document.querySelector('.page:not(.hidden)');
+    if(pg){
+      var name=pg.id.replace('Page','');
+      if(name==='dashboard')renderDashboard();
+      else if(name==='transactions')renderAllTransactions();
+      else if(name==='budgets')renderAllBudgets();
+      else if(name==='goals')renderAllGoals();
+      else if(name==='lending')renderLending();
+      else if(name==='subscriptions')renderSubscriptions();
+      else if(name==='banks')renderBanks();
+      else if(name==='investments'){renderInvestments();fetchMarketData();}
+    }
+    clearTimeout(_ptTimer);
+    _ptTimer=setTimeout(_reset,900);
+  }
+
+  document.addEventListener('touchstart',function(e){
+    if(!_mobile())return;
+    if(window.scrollY>4)return;
+    _ptY=e.touches[0].clientY;
+    _ptDy=0;_ptLive=false;_ptDone=false;
+  },{passive:true});
+
+  document.addEventListener('touchmove',function(e){
+    if(!_mobile()||_ptDone)return;
+    if(window.scrollY>4){_ptLive=false;return;}
+    _ptDy=e.touches[0].clientY-_ptY;
+    if(_ptDy<=0){
+      _ptLive=false;
+      var b=_bar();if(b)b.classList.remove('ptr-open');
+      return;
+    }
+    _ptLive=true;
+    var b=_bar();if(b)b.classList.add('ptr-open');
+    var ready=_ptDy>=THRESH;
+    var r=_ring();if(r)r.classList.toggle('ptr-ready',ready);
+    var t=_txt();if(t)t.textContent=ready?'↑ Release to refresh':'↓ Pull down to refresh';
+  },{passive:true});
+
+  document.addEventListener('touchend',function(){
+    if(!_mobile()||!_ptLive)return;
+    _ptLive=false;
+    if(_ptDy>=THRESH){
+      _ptDone=true;
+      _doRefresh();
+    } else {
+      _reset();
+    }
+    _ptDy=0;
+  },{passive:true});
+})();
 </script>
 </body>
 </html>

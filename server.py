@@ -856,12 +856,22 @@ def market_quotes():
 
 @app.route('/api/market/crypto')
 def market_crypto():
-    """Proxy CoinGecko for crypto prices."""
+    """Proxy CoinGecko for crypto prices with real 24 h % change."""
     try:
         r = requests.get(
-            'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=inr,usd',
+            'https://api.coingecko.com/api/v3/coins/markets'
+            '?vs_currency=inr&ids=bitcoin,ethereum'
+            '&price_change_percentage=24h&order=market_cap_desc&per_page=2&page=1',
             headers=MKT_HEADERS, timeout=8)
-        return jsonify(r.json())
+        data = r.json()
+        result = {}
+        for coin in data:
+            result[coin['id']] = {
+                'inr':       coin.get('current_price', 0),
+                'usd':       None,
+                'change_24h': round(coin.get('price_change_percentage_24h') or 0, 2),
+            }
+        return jsonify(result)
     except Exception:
         return jsonify({})
 
