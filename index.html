@@ -239,7 +239,7 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
 .invest-return{font-size:.76rem;font-weight:600;margin-top:.15rem}
 .invest-return.pos{color:var(--success)}.invest-return.neg{color:var(--danger)}
 /* Market pulse */
-.market-pulse{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.75rem;margin-bottom:1rem}
+.market-pulse{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1rem}
 .market-ticker{background:var(--bg-alt);border-radius:var(--radius-md);padding:.75rem .875rem;border:1px solid var(--border-light);transition:all .2s;position:relative;overflow:hidden}
 .market-ticker:hover{border-color:var(--primary);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
 .market-ticker.active{border-color:var(--primary);box-shadow:0 0 0 2px rgba(4,120,87,.12);background:rgba(4,120,87,.04)}
@@ -247,8 +247,10 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
 .market-ticker-price{font-family:'Sora',sans-serif;font-size:.975rem;font-weight:700;color:var(--text)}
 .market-ticker-change{font-size:.75rem;font-weight:600;margin-top:.15rem}
 .market-ticker-change.up{color:var(--success)}.market-ticker-change.down{color:var(--danger)}
-.market-detail-card{margin-top:.75rem;background:linear-gradient(135deg,rgba(4,120,87,.05),rgba(16,185,129,.02));border:1px solid rgba(4,120,87,.14);border-radius:var(--radius-md);padding:clamp(.85rem,2vw,1rem)}
-.market-detail-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap;margin-bottom:.875rem}
+.market-detail-card{margin-top:.75rem;background:linear-gradient(135deg,rgba(4,120,87,.05),rgba(16,185,129,.02));border:1px solid rgba(4,120,87,.14);border-radius:var(--radius-md);padding:clamp(.85rem,2vw,1rem);display:grid;gap:.75rem}
+.market-detail-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap}
+.market-detail-head > div:first-child{min-width:0;flex:1}
+.market-detail-head > div:last-child{flex-shrink:0}
 .market-detail-title{font-family:'Sora',sans-serif;font-size:clamp(.95rem,2vw,1.05rem);font-weight:700;color:var(--text);line-height:1.2}
 .market-detail-sub{font-size:clamp(.72rem,1.6vw,.8rem);color:var(--text-2);margin-top:.2rem;line-height:1.35}
 .market-detail-meta{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem;align-items:center}
@@ -1009,7 +1011,6 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
           <button class="btn btn-primary" onclick="showAddInvestmentModal()">+ Add Investment</button>
         </div>
       </div>
-      <!-- Market Pulse -->
       <div class="card" style="margin-bottom:.875rem;">
         <div class="card-header">
           <h2 class="card-title"><span class="market-live-dot"></span>Market Pulse</h2>
@@ -1049,14 +1050,7 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
         </div>
         <p style="font-size:.72rem;color:var(--text-3);margin-top:.25rem;">Crypto via CoinGecko · indices and stocks via Yahoo Finance · commodities via Yahoo Finance futures.</p>
       </div>
-      <!-- Portfolio stats -->
-      <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
-        <div class="stat-card"><div class="stat-header"><div><div class="stat-label">Total Invested</div><div class="stat-value" id="investTotal">₹0</div></div><div class="stat-icon neutral">💼</div></div></div>
-        <div class="stat-card card-income"><div class="stat-header"><div><div class="stat-label">Current Value</div><div class="stat-value" id="investValue" style="color:var(--success);">₹0</div></div><div class="stat-icon income">📊</div></div></div>
-        <div class="stat-card"><div class="stat-header"><div><div class="stat-label">Total Returns</div><div class="stat-value" id="investReturns">—</div></div><div class="stat-icon neutral">💹</div></div></div>
-        <div class="stat-card"><div class="stat-header"><div><div class="stat-label">Return %</div><div class="stat-value" id="investXIRR">—</div></div><div class="stat-icon neutral">📐</div></div></div>
-      </div>
-      <div class="card"><div id="investmentsList"></div></div>
+  <div class="card"><div id="investmentsList"></div></div>
     </div>
 
     <!-- Reports -->
@@ -1623,6 +1617,13 @@ const marketItems=[
   {id:'nifty50',  label:'Nifty 50',   price:24526.50, chg:0.82,  type:'index',    flag:'🇮🇳'},
   {id:'sensex',   label:'Sensex',     price:80432.10, chg:0.75,  type:'index',    flag:'🇮🇳'},
   {id:'niftybank',label:'Nifty Bank', price:51820.60, chg:-0.32, type:'index',    flag:'🇮🇳'},
+  {id:'ftse100',  label:'FTSE 100',   price:8234.10,  chg:0.18,  type:'index',    flag:'🇬🇧'},
+  {id:'dax',      label:'DAX',        price:18209.35, chg:0.41,  type:'index',    flag:'🇩🇪'},
+  {id:'cac40',    label:'CAC 40',     price:8084.50,  chg:0.26,  type:'index',    flag:'🇫🇷'},
+  {id:'nikkei',   label:'Nikkei 225', price:38912.80, chg:0.62,  type:'index',    flag:'🇯🇵'},
+  {id:'hangseng', label:'Hang Seng',  price:17982.20, chg:-0.22, type:'index',    flag:'🇭🇰'},
+  {id:'asx200',   label:'ASX 200',    price:7821.40,  chg:0.33,  type:'index',    flag:'🇦🇺'},
+  {id:'tsx',      label:'TSX',        price:22412.60, chg:0.15,  type:'index',    flag:'🇨🇦'},
   {id:'sp500',    label:'S&P 500',    price:5127.79,  chg:0.51,  type:'index',    flag:'🇺🇸'},
   {id:'nasdaq',   label:'NASDAQ',     price:15927.40, chg:0.89,  type:'index',    flag:'🇺🇸'},
   {id:'dowjones', label:'Dow Jones',  price:39127.50, chg:0.32,  type:'index',    flag:'🇺🇸'},
@@ -1632,7 +1633,7 @@ const marketItems=[
   {id:'bitcoin',  label:'Bitcoin',    price:null,     chg:null,  type:'crypto',   flag:'₿'},
   {id:'ethereum', label:'Ethereum',   price:null,     chg:null,  type:'crypto',   flag:'Ξ'}
 ];
-let selectedTickers=new Set(['nifty50','sensex','sp500','nasdaq','gold','bitcoin','ethereum']);
+let selectedTickers=new Set(['nifty50','sensex','ftse100','dax','cac40','nikkei','hangseng','asx200','tsx','sp500','nasdaq','dowjones','gold','bitcoin','ethereum']);
 let _pendingTickers=null,_pendingStocks=null;
 let _marketDetailKey=null;
 const stockCatalog=[
@@ -2342,9 +2343,6 @@ const investColors={'Mutual Fund':'#10B981','Stocks (NSE/BSE)':'#6366F1','Fixed 
 function renderInvestments(){
   const filter=document.getElementById('investCountry')?.value||'all';const filtered=demoInvestments.filter(x=>filter==='all'||x.country===filter);
   const ti=filtered.reduce((s,x)=>s+x.invested,0),tv=filtered.reduce((s,x)=>s+x.currentVal,0),tr=tv-ti,rp=ti>0?((tr/ti)*100):0;
-  document.getElementById('investTotal').textContent=`₹${ti.toLocaleString('en-IN')}`;document.getElementById('investValue').textContent=`₹${tv.toLocaleString('en-IN')}`;
-  document.getElementById('investReturns').innerHTML=`<span style="color:${tr>=0?'var(--success)':'var(--danger)'};">${tr>=0?'+':''}₹${Math.abs(tr).toLocaleString('en-IN')}</span>`;
-  document.getElementById('investXIRR').innerHTML=`<span style="color:${rp>=0?'var(--success)':'var(--danger)'};">${rp>=0?'+':''}${rp.toFixed(1)}%</span>`;
   const el=document.getElementById('investmentsList');if(!el)return;
   if(!filtered.length){el.innerHTML=emptyState('📈','No investments','Add your first investment');return;}
   const byCountry={india:filtered.filter(x=>x.country==='india'),international:filtered.filter(x=>x.country==='international')};
