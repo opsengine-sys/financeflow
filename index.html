@@ -385,7 +385,6 @@ body.dark-mode .btn-apple:hover{background:#f0f0f0}
 .alert-banner-icon{font-size:1.25rem;flex-shrink:0}
 .alert-banner-text{flex:1;font-size:.85rem;font-weight:500;color:var(--text)}
 .alert-banner-sub{font-size:.76rem;color:var(--text-2);margin-top:.1rem}
-.two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:1rem;margin-bottom:1rem}
 .tip-banner{display:flex;align-items:center;gap:1rem;background:linear-gradient(135deg,rgba(4,120,87,.06),rgba(16,185,129,.06));border:1px solid rgba(4,120,87,.18);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem}
 .tip-banner-icon{font-size:1.75rem;flex-shrink:0}
 .tip-banner-title{font-weight:600;font-size:.9rem;color:var(--text)}
@@ -476,97 +475,162 @@ select option{background:var(--surface);color:var(--text)}
   height:3rem !important;
   font-size:1rem !important;
 }
-/* ── Responsive ── */
+/* ─── RESPONSIVE ─────────────────────────────────────── */
+/* Global: every flex/grid child must be able to shrink */
+.main-content,.card,.card-header,.stat-card,.stat-header,
+.transaction-item,.transaction-info,.budget-item,.budget-item-info,
+.goal-item,.goal-info,.invest-item,.invest-info,
+.page-header,.greeting-top,.weather-widget{min-width:0}
+/* Contain all media */
+img,canvas{max-width:100%}
+/* Truncate long names in list rows */
+.transaction-title,.budget-item-name,.goal-name,.invest-name,
+.account-list-name,.settings-item-title{
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+/* Long currency values break gracefully */
+.stat-value,.greeting-name{word-break:break-word}
+/* Chart scroll containers */
+.chart-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:.25rem;scrollbar-width:thin}
+.chart-scroll svg{min-width:280px;max-width:none}
+.chart-container{width:100%;overflow:hidden}
+
+/* ≤1024px — tablet/mobile: sidebar collapses, topbar + bottom-nav appear */
 @media(max-width:1024px){
   .sidebar{transform:translateX(-100%);padding-top:calc(var(--topbar-h) + 1rem)}
   .sidebar.mobile-visible{transform:translateX(0)}
-  .main-content{margin-left:0;padding-top:calc(var(--topbar-h) + 1.25rem)}
-  .bottom-nav{display:block}
-  .main-content{padding-bottom:6rem}
+  .main-content{margin-left:0;padding:calc(var(--topbar-h) + 1.25rem) 1.25rem 6.5rem}
   .mobile-topbar{display:flex}
+  .bottom-nav{display:block}
   .two-col{grid-template-columns:1fr}
 }
+
+/* ≤768px — large phones / small tablets */
 @media(max-width:768px){
-  .header-title{font-size:1.375rem}
+  :root{--topbar-h:52px}
+  .main-content{padding:calc(var(--topbar-h) + .875rem) .875rem 6rem}
+  /* Page header stacks title above actions */
+  .page-header{flex-direction:column;align-items:stretch;margin-bottom:.875rem;gap:.5rem}
+  .header-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:.5rem}
+  .header-title{font-size:1.35rem}
   .header-subtitle{font-size:.82rem}
-  .stats-grid{grid-template-columns:repeat(2,1fr);gap:.625rem}
-  .stat-value{font-size:1.45rem}
+  /* Buttons show icon only — hide text labels */
+  .header-actions .btn > span:not(.notif-count){display:none}
+  /* Stats — 2-column grid */
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:.625rem;margin-bottom:1rem}
+  .stat-card{padding:1rem}
+  .stat-value{font-size:1.35rem}
+  .stat-icon{width:38px;height:38px;font-size:1.1rem}
+  /* Cards */
+  .card{padding:1rem;margin-bottom:.75rem}
+  .card-header{margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem}
+  .card-title{font-size:.95rem}
+  /* Forms collapse to 1 column */
   .form-row{grid-template-columns:1fr}
-  .two-col{grid-template-columns:1fr}
-  .modal-body,.modal-header,.modal-footer{padding-left:1.125rem;padding-right:1.125rem}
-  .modal{border-radius:var(--radius-xl) var(--radius-xl) 0 0;margin-top:auto;max-height:92vh;width:100%;max-width:100%}
+  /* Modals slide up from bottom */
   .modal-overlay{align-items:flex-end;padding:0}
-  .login-container{padding:0;align-items:flex-end;background:linear-gradient(135deg,#f0fdf4,#ecfdf5)}
-  .login-card{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding:2rem 1.5rem 2.5rem;max-width:100%;box-shadow:0 -8px 40px rgba(0,0,0,.12);overflow-y:auto;max-height:92vh}
-  .bank-update-fields{flex-direction:column;gap:.5rem;width:100%}
-  .bank-update-input,.bank-update-date{width:100%}
-  .greeting-card{padding:1rem 1.25rem}
+  .modal,.modal-lg{border-radius:var(--radius-xl) var(--radius-xl) 0 0;margin-top:auto;max-height:92vh;width:100%;max-width:100%}
+  .modal-body,.modal-header,.modal-footer{padding-left:1rem;padding-right:1rem}
+  /* Login — bottom sheet */
+  .login-container{padding:0;align-items:flex-end}
+  .login-card{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding:2rem 1.25rem 2.5rem;max-width:100%;box-shadow:0 -8px 40px rgba(0,0,0,.12);overflow-y:auto;max-height:92vh}
+  /* Greeting */
+  .greeting-card{padding:1rem 1.125rem}
+  .greeting-top{flex-direction:column;gap:.625rem}
   .greeting-name{font-size:1.1rem}
   .greeting-fun{display:none}
-  .greeting-top{flex-direction:column;gap:.75rem}
-  .weather-widget{width:100%;min-width:0}
+  .weather-widget{width:100%;min-width:0;box-sizing:border-box}
+  /* Market pulse — 3 columns */
   .market-pulse{grid-template-columns:repeat(3,1fr);gap:.5rem}
   .market-ticker{padding:.625rem .75rem}
   .market-ticker-price{font-size:.875rem}
-  .tx-filter-bar{top:calc(var(--topbar-h) + .25rem);padding:.625rem .875rem;gap:.375rem}
-  .tx-filter-search{min-width:120px}
-  .tx-type-pills{flex-wrap:wrap;gap:.25rem}
-  .main-content{padding:calc(var(--topbar-h) + 1rem) .875rem 6rem}
-  .page-header{margin-bottom:1rem;gap:.625rem}
-  .card{padding:1rem 1.125rem}
-  .card-header{margin-bottom:.875rem}
+  .market-ticker-name{font-size:.68rem}
+  /* Charts */
   .category-legend{grid-template-columns:repeat(2,1fr)}
-  .chart-container svg{max-width:100%}
-  .chart-scroll svg{min-width:300px}
+  /* Transaction filter bar */
+  .tx-filter-bar{top:calc(var(--topbar-h) + .25rem);padding:.5rem .875rem;gap:.375rem}
+  .tx-filter-search{min-width:110px}
+  .tx-type-pills{flex-wrap:wrap;gap:.25rem}
+  /* List rows */
+  .transaction-item{padding:.625rem .75rem;gap:.625rem}
+  .transaction-icon{width:36px;height:36px;font-size:1rem}
+  .transaction-amount{font-size:.9rem}
+  .budget-item{padding:.75rem .875rem}
+  .goal-item{flex-wrap:wrap}
+  .invest-item{flex-wrap:wrap}
+  .invest-right{text-align:left;margin-left:48px}
+  /* Bank update fields */
+  .bank-update-fields{flex-direction:column;gap:.5rem;width:100%}
+  .bank-update-input,.bank-update-date{width:100%}
+  /* Onboarding */
   .ob-option-grid{grid-template-columns:1fr 1fr;gap:.5rem}
   .ob-option{padding:.75rem .5rem}
   .ob-option-sub{display:none}
-  .goal-item{flex-wrap:wrap}
-  .invest-right{text-align:left}
-  .page-header .header-actions .btn span{display:none}
+  /* Month in Review */
+  .month-review-summary{padding:1rem 1rem .875rem}
+  .month-review-meta{gap:.375rem}
+  .review-stat{font-size:.75rem;padding:.25rem .6rem}
 }
+
+/* ≤480px — standard phones */
 @media(max-width:480px){
+  .main-content{padding:calc(var(--topbar-h) + .75rem) .75rem 5.75rem}
+  /* Stats — compact 2-col */
   .stats-grid{grid-template-columns:repeat(2,1fr);gap:.5rem}
-  .stat-card{padding:.875rem 1rem}
-  .stat-value{font-size:1.3rem}
-  .stat-icon{width:36px;height:36px;font-size:1.1rem}
+  .stat-card{padding:.875rem}
+  .stat-value{font-size:1.2rem}
+  .stat-icon{width:34px;height:34px;font-size:1rem}
+  .stat-label{font-size:.68rem}
+  .stat-change{font-size:.72rem}
+  /* Cards */
+  .card{padding:.875rem;margin-bottom:.625rem}
+  .card-header{gap:.375rem}
+  /* Greeting */
+  .greeting-card{padding:.875rem}
+  .greeting-name{font-size:1rem}
+  .greeting-sub{font-size:.8rem}
+  /* Header */
+  .header-title{font-size:1.2rem}
+  /* Market — 2 columns */
   .market-pulse{grid-template-columns:repeat(2,1fr);gap:.375rem}
-  .tx-filter-bar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .market-ticker{padding:.5rem .625rem}
+  .market-ticker-price{font-size:.82rem}
+  /* Transaction filter — horizontal scroll, no wrap */
+  .tx-filter-bar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
   .tx-filter-bar::-webkit-scrollbar{display:none}
   .tx-type-pills{display:none}
-  .login-card{padding:1.5rem 1.125rem 1.75rem}
-  .greeting-card{padding:.875rem 1rem}
-  .greeting-name{font-size:1rem}
-  .header-title{font-size:1.25rem}
-  .card{padding:.875rem}
-  .transaction-item{padding:.625rem .75rem}
-  .transaction-icon{width:34px;height:34px;font-size:1rem}
+  /* Transaction rows */
+  .transaction-item{padding:.5rem .625rem;gap:.5rem}
+  .transaction-icon{width:34px;height:34px}
+  .transaction-amount{font-size:.875rem}
+  /* Budget rows */
   .budget-item{padding:.75rem .875rem}
-  .main-content{padding:calc(var(--topbar-h) + .75rem) .75rem 5.5rem}
-  .bottom-nav{padding:.375rem 0}
-  .bottom-nav-link{font-size:.65rem;gap:.15rem}
+  /* Login */
+  .login-card{padding:1.5rem 1rem 2rem}
+  .login-logo-icon{width:52px;height:52px;font-size:1.25rem}
+  .login-title{font-size:1.5rem}
+  /* Bottom nav */
+  .bottom-nav{padding:.35rem 0}
+  .bottom-nav-link{font-size:.62rem;gap:.125rem;padding:.3rem .25rem}
   .bottom-nav-icon{font-size:1.1rem}
+  /* FAB */
   .fab{bottom:5rem;right:1rem;width:50px;height:50px;font-size:1.35rem}
+  /* Month review */
+  .review-stat{font-size:.7rem;padding:.2rem .5rem}
 }
-@media(max-width:360px){
-  .stats-grid{grid-template-columns:1fr}
+
+/* ≤375px — small phones (iPhone SE, Galaxy A) */
+@media(max-width:375px){
   .main-content{padding:calc(var(--topbar-h) + .625rem) .625rem 5.5rem}
-  .stat-value{font-size:1.2rem}
+  /* Single-column stats so amounts don't squash */
+  .stats-grid{grid-template-columns:1fr}
+  .stat-value{font-size:1.4rem}
+  /* Cards */
+  .card{padding:.75rem}
+  /* Onboarding */
   .ob-option-grid{grid-template-columns:1fr}
-}
-/* prevent text overflow globally */
-.transaction-title,.budget-item-name,.goal-name,.invest-name,.account-list-name,.settings-item-title{
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%
-}
-.stat-value,.greeting-name{word-break:break-word}
-/* Charts fully responsive */
-.chart-container{width:100%;overflow:hidden}
-.chart-container svg{width:100%;height:auto}
-.chart-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:.25rem}
-.chart-scroll svg{min-width:280px;max-width:none}
-/* Fix modal bottom sheet on mobile */
-@media(max-width:768px){
-  .modal-lg{max-width:100%}
+  /* Bottom nav tighter */
+  .bottom-nav-link{font-size:.58rem}
 }
 .hidden{display:none!important}
 /* ── Onboarding ── */
