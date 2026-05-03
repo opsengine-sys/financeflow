@@ -1826,7 +1826,7 @@ function renderAIInsights(){
 }
 
 /* ══ ANIMATED CHARTS ══ */
-let _barData=null,_fcastData=null,_chartResizeObs=null;
+let _barData=null,_fcastData=null,_chartResizeObs=null,_chartResizeTimer=null,_chartResizeHandler=null,_chartOrientHandler=null;
 function posChartTip(evt,container,tt){
   const cr=container.getBoundingClientRect();
   let x=evt.clientX-cr.left+14,y=evt.clientY-cr.top-12;
@@ -1862,17 +1862,30 @@ function fcastEnter(evt,i,cid){
 }
 function fcastMove(evt,cid){barMove(evt,cid);}
 function fcastLeave(cid){barLeave(cid);}
+function _redrawCharts(){
+  const page=document.getElementById('dashboardPage');
+  if(!page||page.classList.contains('hidden'))return;
+  renderIncomeExpenseChart();renderCategoryChart();renderForecastChart();
+}
 function setupChartResize(){
+  function debounced(){clearTimeout(_chartResizeTimer);_chartResizeTimer=setTimeout(_redrawCharts,150);}
+  /* Disconnect previous observer */
   if(_chartResizeObs){try{_chartResizeObs.disconnect();}catch{}}
-  if(typeof ResizeObserver==='undefined')return;
-  _chartResizeObs=new ResizeObserver(()=>{
-    const page=document.getElementById('dashboardPage');
-    if(page&&!page.classList.contains('hidden')){renderIncomeExpenseChart();renderForecastChart();}
-  });
-  const c1=document.getElementById('incomeExpenseChart');
-  const c2=document.getElementById('forecastChart');
-  if(c1)_chartResizeObs.observe(c1);
-  if(c2)_chartResizeObs.observe(c2);
+  /* Remove previous window listeners */
+  if(_chartResizeHandler)window.removeEventListener('resize',_chartResizeHandler);
+  if(_chartOrientHandler)window.removeEventListener('orientationchange',_chartOrientHandler);
+  /* ResizeObserver on the main-content container — fires when layout width changes */
+  if(typeof ResizeObserver!=='undefined'){
+    _chartResizeObs=new ResizeObserver(debounced);
+    const mc=document.getElementById('mainContent');
+    if(mc)_chartResizeObs.observe(mc);
+  }
+  /* Fallback: window resize event (covers Safari, old Android) */
+  _chartResizeHandler=debounced;
+  _chartOrientHandler=()=>setTimeout(debounced,300);
+  window.addEventListener('resize',_chartResizeHandler,{passive:true});
+  /* orientationchange fires 300ms after to let the browser finish reflowing */
+  window.addEventListener('orientationchange',_chartOrientHandler,{passive:true});
 }
 function renderDashboard(){renderRecentTransactions();renderBudgetOverview();renderGoalsOverview();renderAIInsights();setTimeout(()=>{renderIncomeExpenseChart();renderCategoryChart();renderForecastChart();setupChartResize();},60);}
 
