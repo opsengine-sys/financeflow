@@ -117,9 +117,9 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
 .btn-ghost:hover{background:var(--bg-alt);color:var(--primary)}
 .btn-sm{padding:.4rem .875rem;font-size:.8rem}
 /* Greeting */
-.greeting-card{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 60%,#059669 100%);border-radius:var(--radius-xl);padding:1.5rem 1.75rem;margin-bottom:1.25rem;color:#fff;position:relative;overflow:hidden}
-.greeting-card::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:rgba(255,255,255,.06);border-radius:50%}
-.greeting-card::after{content:'';position:absolute;bottom:-60px;left:30%;width:160px;height:160px;background:rgba(255,255,255,.04);border-radius:50%}
+.greeting-card{background:linear-gradient(135deg,#046c4e 0%,#0f9d6a 60%,#059669 100%);border-radius:var(--radius-xl);padding:1.5rem 1.75rem;margin-bottom:1.25rem;color:#fff;position:relative;overflow:hidden}
+.greeting-card::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,0) 28%)}
+.greeting-card::after{content:'';position:absolute;inset:0;background:none}
 .greeting-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem}
 .greeting-name{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:700;line-height:1.2}
 .greeting-sub{font-size:.88rem;opacity:.85;margin-top:.25rem}
