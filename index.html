@@ -117,14 +117,14 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
 .btn-ghost:hover{background:var(--bg-alt);color:var(--primary)}
 .btn-sm{padding:.4rem .875rem;font-size:.8rem}
 /* Greeting */
-.greeting-card{background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius-xl);padding:1.5rem 1.75rem;margin-bottom:1.25rem;color:var(--text);position:relative;overflow:hidden;box-shadow:var(--shadow-sm)}
-.greeting-card::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:rgba(4,120,87,.04);border-radius:50%}
-.greeting-card::after{content:'';position:absolute;bottom:-60px;left:30%;width:160px;height:160px;background:rgba(4,120,87,.03);border-radius:50%}
+.greeting-card{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 60%,#059669 100%);border-radius:var(--radius-xl);padding:1.5rem 1.75rem;margin-bottom:1.25rem;color:#fff;position:relative;overflow:hidden}
+.greeting-card::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:rgba(255,255,255,.06);border-radius:50%}
+.greeting-card::after{content:'';position:absolute;bottom:-60px;left:30%;width:160px;height:160px;background:rgba(255,255,255,.04);border-radius:50%}
 .greeting-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem}
 .greeting-name{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:700;line-height:1.2}
 .greeting-sub{font-size:.88rem;opacity:.85;margin-top:.25rem}
 .greeting-fun{font-size:.82rem;opacity:.7;margin-top:.5rem;font-style:italic}
-.weather-widget{background:var(--bg-alt);border-radius:var(--radius-lg);padding:.75rem 1rem;display:flex;align-items:center;gap:.75rem;min-width:160px;border:1px solid var(--border-light)}
+.weather-widget{background:rgba(255,255,255,.15);border-radius:var(--radius-lg);padding:.75rem 1rem;display:flex;align-items:center;gap:.75rem;backdrop-filter:blur(4px);min-width:160px}
 .weather-icon{font-size:2rem;flex-shrink:0}
 .weather-temp{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:700;line-height:1}
 .weather-cond{font-size:.8rem;opacity:.85;margin-top:.2rem}
@@ -1600,24 +1600,11 @@ async function fetchWeather(){
         catch{lat=19.076;lon=72.877;locName='Mumbai';}
       }
     }
-    const params=[
-      `latitude=${lat.toFixed(2)}`,`longitude=${lon.toFixed(2)}`,
-      `current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,apparent_temperature,surface_pressure,visibility,uv_index`,
-      `daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_sum`,
-      `timezone=auto`,`forecast_days=7`
-    ].join('&');
-    const r=await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(2)}&longitude=${lon.toFixed(2)}&current=temperature_2m,weather_code&timezone=auto`);
     const d=await r.json();
-    const wc=d.current.weather_code;
-    const desc=wcMap[wc]||'🌡️ Weather';
-    const[icon,...conds]=desc.split(' ');
-    document.getElementById('weatherIcon').textContent=icon;
-    document.getElementById('weatherTemp').textContent=`${Math.round(d.current.temperature_2m)}°C`;
-    document.getElementById('weatherCond').textContent=conds.join(' ');
-    if(!locName){
-      try{const gr=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(2)}&lon=${lon.toFixed(2)}&format=json`);const gd=await gr.json();locName=gd.address?.city||gd.address?.town||gd.address?.state||'Your location';}
-      catch{locName='Your location';}
-    }
+    const wc=d.current.weather_code;const desc=wcMap[wc]||'🌡️ Weather';const[icon,...conds]=desc.split(' ');
+    document.getElementById('weatherIcon').textContent=icon;document.getElementById('weatherTemp').textContent=`${Math.round(d.current.temperature_2m)}°C`;document.getElementById('weatherCond').textContent=conds.join(' ');
+    if(!locName){try{const gr=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(2)}&lon=${lon.toFixed(2)}&format=json`);const gd=await gr.json();locName=gd.address?.city||gd.address?.town||gd.address?.state||'Your location';}catch{locName='Your location';}}
     document.getElementById('weatherLoc').textContent=locName;
   }catch{
     document.getElementById('weatherIcon').textContent='🌤️';
