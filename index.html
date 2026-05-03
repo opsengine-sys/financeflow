@@ -260,6 +260,19 @@ body.dark-mode .form-input[type="date"]::-webkit-calendar-picker-indicator{filte
 .insight-card{background:linear-gradient(135deg,rgba(4,120,87,.04),rgba(16,185,129,.04));border:1px solid rgba(4,120,87,.15);border-radius:var(--radius-md);padding:1rem 2.5rem 1rem 1rem;margin-bottom:.75rem;position:relative}
 .insight-card::after{content:'✨';position:absolute;top:.875rem;right:1rem}
 .insight-text{color:var(--text);font-weight:500;line-height:1.55;font-size:.9rem}
+/* ── Month in Review ── */
+.month-review-summary{position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(4,120,87,.06) 0%,rgba(16,185,129,.03) 100%);border:1.5px solid rgba(4,120,87,.2);border-radius:var(--radius-md);padding:1.25rem 1.5rem 1rem;margin-bottom:1rem;}
+.month-review-summary::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#047857 0%,#10B981 55%,#34D399 100%);}
+.month-review-text{font-size:.9rem;line-height:1.75;color:var(--text);font-weight:400;margin:0;}
+.month-review-text strong{color:#047857;font-weight:700;}
+.month-review-meta{display:flex;gap:.5rem;margin-top:.875rem;flex-wrap:wrap;}
+.review-stat{display:inline-flex;align-items:center;gap:.3rem;background:rgba(4,120,87,.1);border-radius:20px;padding:.275rem .7rem;font-size:.775rem;font-weight:600;color:#047857;white-space:nowrap;}
+.insight-chips{display:flex;flex-direction:column;gap:.5rem;}
+.insight-chip{display:flex;align-items:flex-start;gap:.75rem;padding:.75rem 1rem;background:var(--bg-alt);border-radius:var(--radius-sm);border:1px solid var(--border);transition:border-color .2s;}
+.insight-chip:hover{border-color:rgba(4,120,87,.3);}
+.insight-chip-icon{font-size:1.2rem;flex-shrink:0;line-height:1.4;}
+.insight-chip-text{font-size:.875rem;color:var(--text-2);line-height:1.55;margin:0;}
+.insight-chip-text strong{color:var(--text);font-weight:600;}
 /* Login */
 .login-container{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;background:linear-gradient(135deg,#f0fdf4,#ecfdf5,#f0fdf4);transition:background .3s}
 .login-card{background:var(--surface);border-radius:var(--radius-xl);padding:2.5rem;max-width:440px;width:100%;box-shadow:var(--shadow-xl);border:1px solid var(--border-light)}
@@ -781,8 +794,18 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
         <div class="stat-card"><div class="stat-header"><div><div class="stat-label">Savings Rate</div><div class="stat-value">38.4%</div><div class="stat-change positive">↑ 3.1% improvement</div></div><div class="stat-icon neutral">📊</div></div></div>
       </div>
       <div class="card">
-        <div class="card-header"><h2 class="card-title">✨ AI Insights</h2><span class="badge badge-green" id="aiInsightsBadge">0 new</span></div>
-        <div id="aiInsightsContainer"><div class="insight-card"><p class="insight-text">Loading insights…</p></div></div>
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">✨ Month in Review</h2>
+            <p style="font-size:.78rem;color:var(--text-3);margin-top:.1rem;" id="insightsMonthLabel"></p>
+          </div>
+          <div style="display:flex;align-items:center;gap:.75rem;">
+            <span class="badge badge-green" id="aiInsightsBadge">—</span>
+            <button class="btn btn-ghost btn-sm" onclick="renderAIInsights()" title="Refresh insights">↻</button>
+          </div>
+        </div>
+        <div id="monthReviewContainer"></div>
+        <div id="aiInsightsContainer"><div class="insight-chip"><span class="insight-chip-icon">⏳</span><p class="insight-chip-text">Generating insights…</p></div></div>
       </div>
       <div class="two-col">
         <div class="card" style="margin-bottom:0;">
@@ -1624,31 +1647,118 @@ function saveTickerSelection(){
 
 /* ══ AI INSIGHTS ══ */
 function renderAIInsights(){
-  const el=document.getElementById('aiInsightsContainer');const badge=document.getElementById('aiInsightsBadge');if(!el)return;
-  const insights=[];
+  const el=document.getElementById('aiInsightsContainer');
+  const badge=document.getElementById('aiInsightsBadge');
+  const reviewEl=document.getElementById('monthReviewContainer');
+  const labelEl=document.getElementById('insightsMonthLabel');
+  if(!el)return;
+
+  const now=new Date();
+  const monthName=now.toLocaleString('en-IN',{month:'long'});
+  const year=now.getFullYear();
+  if(labelEl)labelEl.textContent=`Based on your data for ${monthName} ${year}`;
+
+  /* ── Compute raw numbers ── */
   const expenses=demoTransactions.filter(t=>t.type==='expense');
   const totalIncome=demoTransactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const totalExp=expenses.reduce((s,t)=>s+t.amount,0);
   const savings=totalIncome-totalExp;
-  const savRate=totalIncome>0?((savings/totalIncome)*100).toFixed(1):0;
-  /* Top spending category */
-  const bycat={};expenses.forEach(t=>{bycat[t.category]=(bycat[t.category]||0)+t.amount;});
-  const sorted=Object.entries(bycat).sort((a,b)=>b[1]-a[1]);
-  if(sorted.length){const[tc,ta]=sorted[0];insights.push({icon:'💸',text:`Top spend: <strong>${tc}</strong> at <strong>₹${ta.toLocaleString('en-IN')}</strong>. ${sorted.length>1?`Next is ${sorted[1][0]} at ₹${sorted[1][1].toLocaleString('en-IN')}.`:''}`});}
-  /* Savings rate */
-  if(totalIncome>0){const em=savRate>=30?'🎉':savRate>=15?'👍':'⚠️';insights.push({icon:em,text:`Savings rate is <strong>${savRate}%</strong> — you kept ₹${savings.toLocaleString('en-IN')} this period. ${+savRate>=30?'Excellent discipline!':+savRate>=15?'Good — aim for 30%+ for financial freedom.':'Consider cutting discretionary spending to build a buffer.'}`});}
-  /* Budget alerts */
-  const overB=demoBudgets.filter(b=>(b.spent/b.limit)>=0.9);
-  if(overB.length){insights.push({icon:'🚨',text:`<strong>${overB.map(b=>b.category).join(' & ')}</strong> ${overB.length>1?'budgets are':'budget is'} at 90%+ usage this month. Review or adjust limits to stay on track.`});}
-  /* Goals momentum */
+  const savRate=totalIncome>0?(savings/totalIncome)*100:0;
+
+  const bycat={};
+  expenses.forEach(t=>{bycat[t.category]=(bycat[t.category]||0)+t.amount;});
+  const sortedCats=Object.entries(bycat).sort((a,b)=>b[1]-a[1]);
+  const [topCat,topCatAmt]=sortedCats[0]||['–',0];
+
+  const overBudgets=demoBudgets.filter(b=>b.limit>0&&(b.spent/b.limit)>=0.9);
   const topGoal=[...demoGoals].sort((a,b)=>(b.saved/b.target)-(a.saved/a.target))[0];
-  if(topGoal){const p=((topGoal.saved/topGoal.target)*100).toFixed(0);insights.push({icon:'🏆',text:`<strong>${p}% complete</strong> on "<em>${topGoal.name}</em>" goal — ₹${topGoal.saved.toLocaleString('en-IN')} of ₹${topGoal.target.toLocaleString('en-IN')} saved. ${+p>=80?'Almost there!':'Keep the momentum going!'}`});}
-  /* Recurring */
+  const topGoalPct=topGoal?Math.round((topGoal.saved/topGoal.target)*100):0;
+  const subMonthly=demoSubscriptions.reduce((s,sub)=>{
+    if(sub.cycle==='Monthly')return s+sub.amount;
+    if(sub.cycle==='Yearly')return s+sub.amount/12;
+    if(sub.cycle==='Quarterly')return s+sub.amount/3;
+    return s;
+  },0);
+
+  /* ── Build summary paragraph ── */
+  let summary='';
+  if(totalIncome>0&&totalExp>0){
+    const savWord=savRate>=35?'excellent':savRate>=20?'solid':'lean';
+    summary+=`In <strong>${monthName} ${year}</strong>, you earned <strong>₹${totalIncome.toLocaleString('en-IN')}</strong> and spent <strong>₹${totalExp.toLocaleString('en-IN')}</strong> — keeping <strong>₹${savings.toLocaleString('en-IN')}</strong> (${savRate.toFixed(1)}% savings rate). That's a ${savWord} month. `;
+  } else if(totalExp>0){
+    summary+=`In <strong>${monthName} ${year}</strong>, your total spending was <strong>₹${totalExp.toLocaleString('en-IN')}</strong>. `;
+  }
+  if(topCat!=='–'&&totalExp>0){
+    const catShare=((topCatAmt/totalExp)*100).toFixed(0);
+    summary+=`Your biggest category was <strong>${topCat}</strong> at ₹${topCatAmt.toLocaleString('en-IN')} (${catShare}% of expenses). `;
+  }
+  if(overBudgets.length>0){
+    summary+=`Watch out — <strong>${overBudgets.map(b=>b.category).join(' & ')}</strong> ${overBudgets.length>1?'are':'is'} near the budget ceiling. `;
+  } else if(demoBudgets.length>0){
+    summary+='All budgets are within their limits. ';
+  }
+  if(topGoal){
+    const verb=topGoalPct>=80?'Almost there on':'Solid progress on';
+    summary+=`${verb} your <strong>${topGoal.name}</strong> goal — ${topGoalPct}% saved. `;
+  }
+  if(subMonthly>0){
+    summary+=`Subscriptions cost ~<strong>₹${Math.round(subMonthly).toLocaleString('en-IN')}/mo</strong> — worth an occasional audit.`;
+  }
+
+  /* ── Render summary block ── */
+  if(reviewEl){
+    if(summary){
+      reviewEl.innerHTML=`<div class="month-review-summary">
+        <p class="month-review-text">${summary}</p>
+        <div class="month-review-meta">
+          ${totalIncome>0?`<span class="review-stat">💰 ₹${(totalIncome/1000).toFixed(0)}k income</span>`:''}
+          ${totalExp>0?`<span class="review-stat">💸 ₹${(totalExp/1000).toFixed(0)}k spent</span>`:''}
+          ${savRate>0?`<span class="review-stat">📊 ${savRate.toFixed(1)}% saved</span>`:''}
+          ${demoBudgets.length>0?`<span class="review-stat">🎯 ${demoBudgets.length-overBudgets.length}/${demoBudgets.length} budgets OK</span>`:''}
+          ${demoGoals.length>0?`<span class="review-stat">🏆 ${demoGoals.length} goals active</span>`:''}
+        </div>
+      </div>`;
+    } else {
+      reviewEl.innerHTML='';
+    }
+  }
+
+  /* ── Build individual insight chips ── */
+  const insights=[];
+  if(sortedCats.length){
+    const[tc,ta]=sortedCats[0];
+    insights.push({icon:'💸',text:`Top spend: <strong>${tc}</strong> at <strong>₹${ta.toLocaleString('en-IN')}</strong>.${sortedCats.length>1?` Runner-up: ${sortedCats[1][0]} at ₹${sortedCats[1][1].toLocaleString('en-IN')}.`:''}`});
+  }
+  if(totalIncome>0){
+    const em=savRate>=30?'🎉':savRate>=15?'👍':'⚠️';
+    insights.push({icon:em,text:`Savings rate is <strong>${savRate.toFixed(1)}%</strong> — ₹${savings.toLocaleString('en-IN')} kept this period. ${savRate>=30?'Excellent discipline!':savRate>=15?'Good — aim for 30%+ for financial freedom.':'Consider cutting discretionary spending to build a buffer.'}`});
+  }
+  if(overBudgets.length){
+    insights.push({icon:'🚨',text:`<strong>${overBudgets.map(b=>b.category).join(' & ')}</strong> ${overBudgets.length>1?'budgets are':'budget is'} at 90%+ usage. Review or adjust limits.`});
+  }
+  if(topGoal){
+    insights.push({icon:'🏆',text:`<strong>${topGoalPct}% complete</strong> on "<em>${topGoal.name}</em>" — ₹${topGoal.saved.toLocaleString('en-IN')} of ₹${topGoal.target.toLocaleString('en-IN')} saved. ${topGoalPct>=80?'Almost there!':'Keep the momentum going!'}`});
+  }
   const rec=demoTransactions.filter(t=>t.tags?.includes('recurring'));
-  if(rec.length){const rt=rec.reduce((s,t)=>s+t.amount,0);insights.push({icon:'🔄',text:`<strong>${rec.length} recurring expense${rec.length>1?'s':''}</strong> totalling ₹${rt.toLocaleString('en-IN')}. Review subscriptions &amp; auto-payments periodically.`});}
-  if(!insights.length){el.innerHTML=`<div class="insight-card"><p class="insight-text">Add more transactions to generate personalised insights.</p></div>`;if(badge)badge.textContent='0 new';return;}
-  el.innerHTML=insights.slice(0,4).map(({icon,text})=>`<div class="insight-card"><p class="insight-text"><span style="margin-right:.375rem;">${icon}</span>${text}</p></div>`).join('');
-  if(badge)badge.textContent=`${insights.length} new`;
+  if(rec.length){
+    const rt=rec.reduce((s,t)=>s+t.amount,0);
+    insights.push({icon:'🔄',text:`<strong>${rec.length} recurring expense${rec.length>1?'s':''}</strong> totalling ₹${rt.toLocaleString('en-IN')} — review subscriptions &amp; auto-payments periodically.`});
+  }
+  /* Net worth snapshot */
+  const totalBankBal=demoBanks.reduce((s,b)=>s+b.balance,0);
+  const totalCardDebt=demoCards.reduce((s,c)=>s+(c.outstanding||0),0);
+  if(totalBankBal>0||totalCardDebt>0){
+    const netLiq=totalBankBal-totalCardDebt;
+    insights.push({icon:'🏦',text:`Bank balances total <strong>₹${totalBankBal.toLocaleString('en-IN')}</strong>, card outstanding <strong>₹${totalCardDebt.toLocaleString('en-IN')}</strong> — net liquid: <strong>₹${netLiq.toLocaleString('en-IN')}</strong>.`});
+  }
+
+  if(!insights.length&&!summary){
+    el.innerHTML=`<div class="insight-chip"><span class="insight-chip-icon">📝</span><p class="insight-chip-text">Add more transactions to generate personalised insights.</p></div>`;
+    if(badge)badge.textContent='0 insights';
+    return;
+  }
+  el.innerHTML=`<div class="insight-chips">${insights.slice(0,5).map(({icon,text},i)=>`<div class="insight-chip" style="animation:fadeInUp .35s ease ${i*60}ms both"><span class="insight-chip-icon">${icon}</span><p class="insight-chip-text">${text}</p></div>`).join('')}</div>`;
+  if(badge)badge.textContent=`${insights.length} insight${insights.length!==1?'s':''}`;
 }
 
 /* ══ ANIMATED CHARTS ══ */
