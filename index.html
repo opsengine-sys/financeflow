@@ -1027,24 +1027,6 @@ body.dark-mode .onboarding-overlay{background:linear-gradient(135deg,#0f172a,#1e
           </div>
         </div>
         <div class="market-pulse" id="marketPulse"><div style="grid-column:1/-1;text-align:center;padding:.5rem;font-size:.85rem;color:var(--text-2);">Loading market data…</div></div>
-        <div class="market-detail-card" id="marketDetailCard">
-          <div class="market-detail-head">
-            <div>
-              <div class="market-detail-title" id="marketDetailTitle">Tap a ticker to view details</div>
-              <div class="market-detail-sub" id="marketDetailSub">See a quick trend view, price range, and source-backed live stats.</div>
-            </div>
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end;">
-              <select id="marketViewSelect" onchange="changeMarketView(this.value)" style="padding:.45rem .7rem;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font-size:.8rem;max-width:100%;">
-                <option value="today">Today</option>
-                <option value="week">1W</option>
-                <option value="month">1M</option>
-                <option value="year">1Y</option>
-              </select>
-            </div>
-          </div>
-          <div class="market-detail-meta" id="marketDetailMeta"></div>
-          <div class="market-detail-chart" id="marketDetailChart"></div>
-        </div>
       </div>
       <div class="card"><div id="investmentsList"></div></div>
     </div>
