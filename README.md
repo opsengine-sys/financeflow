@@ -1,6 +1,7 @@
 # FinanceFlow
 
 A modern, mobile-friendly full-stack finance management application built with Flask and SQLite. FinanceFlow provides users with comprehensive expense tracking, investment insights, AI-powered financial recommendations, and secure authentication via Clerk SSO.
+
 ![Under Development](https://img.shields.io/badge/status-under%20development-orange?style=flat-square)
 
 ## Features
