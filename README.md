@@ -256,8 +256,3 @@ For issues, questions, or feature requests:
 - Create a new issue with detailed description
 - Contact the development team via Replit
 
----
-
-**Version:** 1.0.0  
-**Last Updated:** May 2026  
-**Built with ❤️ on Replit**
